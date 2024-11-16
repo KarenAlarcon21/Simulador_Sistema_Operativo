@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simulación de Procesos</title>
+    <script>
+        let intervalId;
+
+        function obtenerEstado() {
+            fetch('/obtener_estado')
+                .then(response => response.json())
+                .then(data => {
+                    actualizarInterfaz(data);
+                    if (data.simulacion_en_curso) {
+                        setTimeout(avanzarSimulacion, 1000);  // Esperar 1 segundo antes de avanzar
+                    } else {
+                        clearInterval(intervalId);
+                        alert('Simulación completada');
+                    }
+                });
+        }
+
+        function avanzarSimulacion() {
+            fetch('/avanzar_simulacion')
+                .then(response => response.json())
+                .then(data => {
+                    actualizarInterfaz(data);
+                    if (data.simulacion_en_curso) {
+                        setTimeout(avanzarSimulacion, 1000);  // Esperar 1 segundo antes de avanzar
+                    } else {
+                        alert('Simulación completada');
+                    }
+                });
+        }
+
+        function actualizarInterfaz(data) {
+            const contenedor = document.getElementById('contenedor-simulacion');
+            contenedor.innerHTML = '';
+
+            const tabla = document.createElement('table');
+            tabla.border = '1';
+            tabla.cellPadding = '5';
+            tabla.cellSpacing = '0';
+
+            const headerRow = document.createElement('tr');
+            data.estados.forEach(estado => {
+                const th = document.createElement('th');
+                th.innerText = estado;
+                headerRow.appendChild(th);
+            });
+            tabla.appendChild(headerRow);
+
+            const dataRow = document.createElement('tr');
+            data.estados.forEach(estado => {
+                const td = document.createElement('td');
+                td.vAlign = 'top';
+                const procesos = data.procesos[estado];
+                procesos.forEach(proceso => {
+                    const p = document.createElement('p');
+                    p.innerHTML = `
+                        <strong>ID:</strong> ${proceso.id}<br>
+                        <strong>Tamaño Inicial:</strong> ${proceso.tamaño_inicial}<br>
+                        <strong>Tamaño Restante:</strong> ${proceso.tamaño}<br>
+                        <strong>Estado:</strong> ${proceso.estado}<br>
+                        <strong>Recursos Requeridos:</strong> ${proceso.recursos_requeridos}<br>
+                        <strong>Recursos Obtenidos:</strong> ${proceso.recursos_obtenidos}<br>
+                        ${proceso.estado === 'Bloqueado' ? `<strong>Faltan Recursos:</strong> ${proceso.recursos_faltantes}<br>` : ''}
+                    `;
+                    td.appendChild(p);
+                    const hr = document.createElement('hr');
+                    td.appendChild(hr);
+                });
+                dataRow.appendChild(td);
+            });
+            tabla.appendChild(dataRow);
+
+            contenedor.appendChild(tabla);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            obtenerEstado();
+        });
+    </script>
+</head>
+<body>
+    <h1>Simulación de Procesos</h1>
+    <div id="contenedor-simulacion"></div>
+    <p><a href="{{ url_for('index') }}">Volver al inicio</a></p>
+</body>
+</html>

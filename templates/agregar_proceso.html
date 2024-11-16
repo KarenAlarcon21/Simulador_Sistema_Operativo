@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Proceso</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        /* Centrar el formulario en la página */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        
+        .form-container {
+            width: 100%;
+            max-width: 400px;  /* Reducido para que el formulario sea más pequeño */
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.5rem;  /* Reducido el tamaño del título */
+        }
+
+        form p {
+            text-align: left;
+            margin-bottom: 12px;
+            font-size: 0.9rem;  /* Texto más pequeño */
+        }
+
+        form input[type="text"],
+        form input[type="submit"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 0.9rem;  /* Reducido el tamaño del texto de los inputs */
+        }
+
+        form input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            font-size: 1rem;  /* Ajustado el tamaño del texto del botón */
+        }
+
+        form input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            font-size: 0.85rem;  /* Texto de error más pequeño */
+            margin-bottom: 15px;
+        }
+
+        .back-button {
+            display: inline-block;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-top: 15px;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Agregar Proceso</h1>
+        
+        {% if error %}
+        <p class="error-message">{{ error }}</p>
+        {% endif %}
+        
+        <form method="post">
+            <p>ID del Proceso: <input type="text" name="id_proceso"></p>
+            <p>Tamaño: <input type="text" name="tamaño"></p>
+            <p>Recursos Requeridos:</p>
+            {% for recurso in recursos %}
+            <p><input type="checkbox" name="recursos" value="{{ recurso }}"> {{ recurso }}</p>
+            {% endfor %}
+            <p><input type="submit" value="Agregar">
+            <!-- Botón que reemplaza al enlace -->
+            <a href="{{ url_for('index') }}" class="back-button">Volver al inicio</a></p>
+        </form>
+    </div>
+</body>
+</html>
