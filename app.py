@@ -309,7 +309,7 @@ def liberar_recursos(proceso, recursos_disponibles_dict):
 @app.route('/generar_reporte')
 def generar_reporte():
     estado_simulacion = get_estado_simulacion()
-    reporte = "Reporte de Procesos:\n\n"
+    reporte = "\n\n"
     for estado in ESTADOS:
         procesos = [Proceso.from_dict(p) for p in estado_simulacion[estado.lower()]]
         for proceso in procesos:
