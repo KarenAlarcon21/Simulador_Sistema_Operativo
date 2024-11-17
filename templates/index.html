@@ -31,15 +31,17 @@ Simulador Sistema Operativo
 <div class="container">
     <!-- Contenedor de la tabla -->
     <div style="flex-grow: 1;">
-        <table border="1" cellpadding="5" cellspacing="0" style="width: 100%;">
-            <tr>
+        <table class="table table-bordered" style="width: 100%;">
+            <thead class="table-dark" style="text-align: center;">
+                <tr>
                 {% for estado in estados %}
                 <th>{{ estado }}</th>
                 {% endfor %}
-            </tr>
+                </tr>
+            </thead>
             <tr>
                 {% for estado in estados %}
-                <td valign="top">
+                <td valign="middle">
                     <!-- Dentro del ciclo que muestra los procesos en cada estado -->
                     {% for proceso in procesos[estado] %}
                     <p>
