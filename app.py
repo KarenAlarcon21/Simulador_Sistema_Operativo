@@ -18,6 +18,7 @@ class Proceso:
         self.tamaño_inicial = int(tamaño)  # Nuevo atributo
         self.recursos_requeridos = recursos_requeridos  # Lista de recursos
         self.estado = 'Nuevo'
+        #self.preminencia=False
         self.recursos_obtenidos = []
         self.unidades_ejecutadas = 0  # Contador de unidades ejecutadas en este ciclo
         self.recursos_faltantes = []  # Recursos faltantes si está bloqueado
@@ -32,6 +33,7 @@ class Proceso:
             'tamaño_inicial': self.tamaño_inicial,
             'recursos_requeridos': self.recursos_requeridos,
             'estado': self.estado,
+            #'preminencia': self.preminencia,
             'recursos_obtenidos': self.recursos_obtenidos,
             'unidades_ejecutadas': self.unidades_ejecutadas,
             'recursos_faltantes': self.recursos_faltantes,
