@@ -116,13 +116,35 @@ def id_ya_existe(id_proceso, estado_simulacion):
 @app.route('/iniciar_simulacion')
 def iniciar_simulacion():
     estado_simulacion = get_estado_simulacion()
+    
+    if not estado_simulacion.get('simulacion_en_curso', False):
+        # Guardar los procesos nuevos que se hayan agregado después de que la simulación anterior terminó
+        nuevos_procesos = estado_simulacion.get('nuevo', [])
+        # Preservar los procesos terminados
+        procesos_terminados = estado_simulacion.get('terminado', [])
+        # Reiniciar el estado de la simulación, excepto 'terminado'
+        estado_simulacion = {
+            'recursos_disponibles_dict': {recurso: True for recurso in RECURSOS_DISPONIBLES},
+            'nuevo': nuevos_procesos,
+            'listo': [],
+            'ejecutando': [],
+            'bloqueado': [],
+            'terminado': procesos_terminados,  # Preservamos los procesos terminados
+            'simulacion_en_curso': True,
+            'simulacion_pausada': False,
+        }
+    else:
+        # Si la simulación está en curso, simplemente asegurarse de que no esté pausada
+        estado_simulacion['simulacion_pausada'] = False
+        estado_simulacion['simulacion_en_curso'] = True
+
     # Mover procesos de 'Nuevo' a 'Listo'
     while estado_simulacion['nuevo']:
         proceso_dict = estado_simulacion['nuevo'].pop(0)
         proceso = Proceso.from_dict(proceso_dict)
         proceso.estado = 'Listo'
         estado_simulacion['listo'].append(proceso.to_dict())
-    estado_simulacion['simulacion_en_curso'] = True
+    
     guardar_estado_simulacion(estado_simulacion)
     return redirect(url_for('simulacion'))
 

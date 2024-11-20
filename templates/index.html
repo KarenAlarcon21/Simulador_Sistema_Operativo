@@ -66,16 +66,8 @@ Simulador Sistema Operativo
 
     <!-- Menú lateral a la derecha -->
     <div class="menu-lateral">
-        
-        <!--{% if not simulacion_en_curso %}
-            <a href="{{ url_for('iniciar_simulacion') }}" class="btn btn-primary mb-3">Iniciar Simulación</a>
-        {% endif %}-->
         {% if simulacion_en_curso %}
-            {% if simulacion_pausada %}
-                <a href="{{ url_for('reanudar_simulacion') }}" class="btn btn-primary mb-3">Reanudar Simulación</a>
-            {% else %}
-                <a href="{{ url_for('simulacion') }}" class="btn btn-primary mb-3">Ver Simulación</a>
-            {% endif %}
+            <a href="{{ url_for('reanudar_simulacion') }}" class="btn btn-primary mb-3">Reanudar Simulación</a>
         {% else %}
             <a href="{{ url_for('iniciar_simulacion') }}" class="btn btn-primary mb-3">Iniciar Simulación</a>
         {% endif %}
