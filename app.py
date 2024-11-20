@@ -58,6 +58,7 @@ def get_estado_simulacion():
             'bloqueado': [],
             'terminado': [],
             'simulacion_en_curso': False,
+            'simulacion proceso':False,
         }
     return session['estado_simulacion']
 
@@ -71,7 +72,8 @@ def index():
     for estado in ESTADOS:
         procesos_por_estado[estado] = [Proceso.from_dict(p) for p in estado_simulacion[estado.lower()]]
     simulacion_en_curso = estado_simulacion.get('simulacion_en_curso', False)
-    return render_template('index.html', estados=ESTADOS, procesos=procesos_por_estado, simulacion_en_curso=simulacion_en_curso)
+    simulacion_pausada = estado_simulacion.get('simulacion_pausada', False)
+    return render_template('index.html', estados=ESTADOS, procesos=procesos_por_estado, simulacion_en_curso=simulacion_en_curso, simulacion_pausada=simulacion_pausada)
 
 @app.route('/agregar_proceso', methods=['GET', 'POST'])
 def agregar_proceso():
@@ -125,6 +127,20 @@ def iniciar_simulacion():
 def simulacion():
     return render_template('simulacion.html')
 
+@app.route('/pausar_simulacion')
+def pausar_simulacion():
+    estado_simulacion = get_estado_simulacion()
+    estado_simulacion['simulacion_pausada'] = True
+    guardar_estado_simulacion(estado_simulacion)
+    return '', 204  # Respuesta vacía con código de estado 204 No Content
+
+@app.route('/reanudar_simulacion')
+def reanudar_simulacion():
+    estado_simulacion = get_estado_simulacion()
+    estado_simulacion['simulacion_pausada'] = False
+    guardar_estado_simulacion(estado_simulacion)
+    return redirect(url_for('simulacion'))
+
 @app.route('/obtener_estado')
 def obtener_estado():
     estado_simulacion = get_estado_simulacion()
@@ -132,17 +148,32 @@ def obtener_estado():
     for estado in ESTADOS:
         procesos_por_estado[estado] = [p for p in estado_simulacion[estado.lower()]]
     simulacion_en_curso = estado_simulacion.get('simulacion_en_curso', False)
+    simulacion_pausada = estado_simulacion.get('simulacion_pausada', False)
     return jsonify({
         'estados': ESTADOS,
         'procesos': procesos_por_estado,
-        'simulacion_en_curso': simulacion_en_curso
+        'simulacion_en_curso': simulacion_en_curso,
+        'simulacion_pausada': simulacion_pausada
     })
+
 
 @app.route('/avanzar_simulacion')
 def avanzar_simulacion():
     estado_simulacion = get_estado_simulacion()
     if not estado_simulacion.get('simulacion_en_curso', False):
         return jsonify({'simulacion_en_curso': False})
+    
+    if estado_simulacion.get('simulacion_pausada', False):
+        # No avanzar la simulación, solo devolver el estado actual
+        procesos_por_estado = {}
+        for estado in ESTADOS:
+            procesos_por_estado[estado] = [p for p in estado_simulacion[estado.lower()]]
+        return jsonify({
+            'estados': ESTADOS,
+            'procesos': procesos_por_estado,
+            'simulacion_en_curso': True,
+            'simulacion_pausada': True
+        })
     
     # Realizar un paso de simulación
     desbloquear_procesos(estado_simulacion)
@@ -162,8 +193,10 @@ def avanzar_simulacion():
     return jsonify({
         'estados': ESTADOS,
         'procesos': procesos_por_estado,
-        'simulacion_en_curso': estado_simulacion['simulacion_en_curso']
+        'simulacion_en_curso': estado_simulacion['simulacion_en_curso'],
+        'simulacion_pausada': estado_simulacion.get('simulacion_pausada', False)
     })
+
 
 
 @app.route('/siguiente_paso')

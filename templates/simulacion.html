@@ -4,28 +4,35 @@
     <title>Simulación de Procesos</title>
     <script>
         let intervalId;
+        let simulacionPausada = false; 
 
         function obtenerEstado() {
             fetch('/obtener_estado')
                 .then(response => response.json())
                 .then(data => {
                     actualizarInterfaz(data);
-                    if (data.simulacion_en_curso) {
+                    if (data.simulacion_en_curso && !simulacionPausada) {
                         setTimeout(avanzarSimulacion, 1000);  // Esperar 1 segundo antes de avanzar
+                    } else if (data.simulacion_pausada) {
+                        simulacionPausada = true;
                     } else {
-                        clearInterval(intervalId);
                         alert('Simulación completada');
                     }
                 });
         }
 
         function avanzarSimulacion() {
+            if (simulacionPausada) {
+                return;
+            }
             fetch('/avanzar_simulacion')
                 .then(response => response.json())
                 .then(data => {
                     actualizarInterfaz(data);
-                    if (data.simulacion_en_curso) {
+                    if (data.simulacion_en_curso && !simulacionPausada) {
                         setTimeout(avanzarSimulacion, 1000);  // Esperar 1 segundo antes de avanzar
+                    } else if (data.simulacion_pausada) {
+                        simulacionPausada = true;
                     } else {
                         alert('Simulación completada');
                     }
@@ -76,6 +83,11 @@
             contenedor.appendChild(tabla);
         }
 
+        function pausarSimulacion() {
+            simulacionPausada = true;
+            fetch('/pausar_simulacion');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             obtenerEstado();
         });
@@ -84,6 +96,6 @@
 <body>
     <h1>Simulación de Procesos</h1>
     <div id="contenedor-simulacion"></div>
-    <p><a href="{{ url_for('index') }}">Volver al inicio</a></p>
+    <p><a href="{{ url_for('index') }}" onclick="pausarSimulacion()">Volver al inicio</a></p>
 </body>
 </html>
