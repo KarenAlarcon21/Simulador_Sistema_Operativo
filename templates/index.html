@@ -51,6 +51,7 @@ Simulador Sistema Operativo
                         <strong>Estado:</strong> {{ proceso.estado }}<br>
                         <strong>Recursos Requeridos:</strong> {{ proceso.recursos_requeridos }}<br>
                         <strong>Recursos Obtenidos:</strong> {{ proceso.recursos_obtenidos }}<br>
+                        <strong>Preeminencia:</strong> {{ proceso.preeminencia }}<br>
                         {% if proceso.estado == 'Bloqueado' %}
                             <strong>Faltan Recursos:</strong> {{ proceso.recursos_faltantes }}
                         {% endif %}

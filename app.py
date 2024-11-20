@@ -12,19 +12,19 @@ ESTADOS = ['Nuevo', 'Listo', 'Ejecutando', 'Bloqueado', 'Terminado']
 RECURSOS_DISPONIBLES = ['Recurso1', 'Recurso2', 'Recurso3', 'Recurso4', 'Recurso5', 'Recurso6']
 
 class Proceso:
-    def __init__(self, id_proceso, tamaño, recursos_requeridos):
+    def __init__(self, id_proceso, tamaño, recursos_requeridos, preeminencia=False):
         self.id = id_proceso
         self.tamaño = int(tamaño)
         self.tamaño_inicial = int(tamaño)  # Nuevo atributo
         self.recursos_requeridos = recursos_requeridos  # Lista de recursos
         self.estado = 'Nuevo'
-        #self.preminencia=False
+        self.preeminencia=preeminencia
         self.recursos_obtenidos = []
         self.unidades_ejecutadas = 0  # Contador de unidades ejecutadas en este ciclo
         self.recursos_faltantes = []  # Recursos faltantes si está bloqueado
 
     def __str__(self):
-        return f"ID: {self.id}, Tamaño: {self.tamaño_inicial}, Restante: {self.tamaño}, Estado: {self.estado}"
+        return f"ID: {self.id}, Tamaño: {self.tamaño_inicial}, Restante: {self.tamaño}, Estado: {self.estado}, Preeminencia: {self.preeminencia}"
 
     def to_dict(self):
         return {
@@ -33,7 +33,7 @@ class Proceso:
             'tamaño_inicial': self.tamaño_inicial,
             'recursos_requeridos': self.recursos_requeridos,
             'estado': self.estado,
-            #'preminencia': self.preminencia,
+            'preeminencia': self.preeminencia,
             'recursos_obtenidos': self.recursos_obtenidos,
             'unidades_ejecutadas': self.unidades_ejecutadas,
             'recursos_faltantes': self.recursos_faltantes,
@@ -41,7 +41,7 @@ class Proceso:
 
     @staticmethod
     def from_dict(data):
-        proceso = Proceso(data['id'], data['tamaño_inicial'], data['recursos_requeridos'])
+        proceso = Proceso(data['id'], data['tamaño_inicial'], data['recursos_requeridos'],preeminencia=data.get('preeminencia', False))
         proceso.tamaño = data['tamaño']
         proceso.estado = data['estado']
         proceso.recursos_obtenidos = data['recursos_obtenidos']
@@ -60,7 +60,7 @@ def get_estado_simulacion():
             'bloqueado': [],
             'terminado': [],
             'simulacion_en_curso': False,
-            'simulacion proceso':False,
+            'simulacion_pausada':False,
         }
     return session['estado_simulacion']
 
@@ -83,6 +83,7 @@ def agregar_proceso():
         id_proceso = request.form.get('id_proceso').lower()
         tamaño = request.form.get('tamaño')
         recursos_requeridos = request.form.getlist('recursos')
+        preeminencia = request.form.get('preeminencia') == 'True'  # Capturar el valor de preeminencia
 
         # Validar entradas
         if not id_proceso or not tamaño.isdigit():
@@ -96,7 +97,7 @@ def agregar_proceso():
             error = f"Ya existe un proceso con el ID '{id_proceso}'. Por favor, elija otro ID."
             return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
 
-        nuevo_proceso = Proceso(id_proceso, tamaño, recursos_requeridos)
+        nuevo_proceso = Proceso(id_proceso, tamaño, recursos_requeridos, preeminencia=preeminencia)
         nuevo_proceso.estado = 'Nuevo'
         estado_simulacion['nuevo'].append(nuevo_proceso.to_dict())
         guardar_estado_simulacion(estado_simulacion)
@@ -223,10 +224,13 @@ def desbloquear_procesos(estado_simulacion):
     bloqueado = [Proceso.from_dict(p) for p in estado_simulacion['bloqueado']]
     recursos_disponibles_dict = estado_simulacion['recursos_disponibles_dict']
 
-    procesos_bloqueados = bloqueado[:]
-    for proceso in procesos_bloqueados:
+    # Separar procesos con y sin preeminencia
+    procesos_preeminentes = [p for p in bloqueado if p.preeminencia]
+    procesos_no_preeminentes = [p for p in bloqueado if not p.preeminencia]
+
+    # Intentar desbloquear procesos preeminentes primero
+    for proceso in procesos_preeminentes:
         if recursos_disponibles(proceso, recursos_disponibles_dict):
-            # Asignar recursos y mover a 'Listo'
             asignar_recursos(proceso, recursos_disponibles_dict)
             proceso.recursos_obtenidos = proceso.recursos_requeridos[:]
             bloqueado.remove(proceso)
@@ -234,7 +238,18 @@ def desbloquear_procesos(estado_simulacion):
             proceso.recursos_faltantes = []
             estado_simulacion['listo'].append(proceso.to_dict())
         else:
-            # Actualizar recursos faltantes
+            proceso.recursos_faltantes = obtener_recursos_faltantes(proceso, recursos_disponibles_dict)
+
+    # Luego intentar desbloquear procesos sin preeminencia
+    for proceso in procesos_no_preeminentes:
+        if recursos_disponibles(proceso, recursos_disponibles_dict):
+            asignar_recursos(proceso, recursos_disponibles_dict)
+            proceso.recursos_obtenidos = proceso.recursos_requeridos[:]
+            bloqueado.remove(proceso)
+            proceso.estado = 'Listo'
+            proceso.recursos_faltantes = []
+            estado_simulacion['listo'].append(proceso.to_dict())
+        else:
             proceso.recursos_faltantes = obtener_recursos_faltantes(proceso, recursos_disponibles_dict)
 
     estado_simulacion['bloqueado'] = [p.to_dict() for p in bloqueado]
@@ -245,30 +260,48 @@ def asignar_procesos(estado_simulacion):
     ejecutando = [Proceso.from_dict(p) for p in estado_simulacion['ejecutando']]
     recursos_disponibles_dict = estado_simulacion['recursos_disponibles_dict']
 
-    procesos_listos = listo[:]
-    for proceso in procesos_listos:
+    # Separar procesos con y sin preeminencia
+    procesos_preeminentes = [p for p in listo if p.preeminencia]
+    procesos_no_preeminentes = [p for p in listo if not p.preeminencia]
+
+    # Asignar procesos preeminentes primero
+    for proceso in procesos_preeminentes:
         if len(ejecutando) < 1:
             if proceso.recursos_obtenidos == proceso.recursos_requeridos:
-                # El proceso ya tiene sus recursos, puede pasar a 'Ejecutando'
                 listo.remove(proceso)
                 proceso.estado = 'Ejecutando'
                 ejecutando.append(proceso)
             elif recursos_disponibles(proceso, recursos_disponibles_dict):
-                # Los recursos están disponibles, asignar recursos y pasar a 'Ejecutando'
                 asignar_recursos(proceso, recursos_disponibles_dict)
                 proceso.recursos_obtenidos = proceso.recursos_requeridos[:]
                 listo.remove(proceso)
                 proceso.estado = 'Ejecutando'
                 ejecutando.append(proceso)
             else:
-                # Los recursos no están disponibles, mover a 'Bloqueado'
                 proceso.estado = 'Bloqueado'
                 proceso.recursos_faltantes = obtener_recursos_faltantes(proceso, recursos_disponibles_dict)
                 listo.remove(proceso)
                 estado_simulacion['bloqueado'].append(proceso.to_dict())
-        else:
-            # CPU ocupado, el proceso permanece en 'Listo'
-            pass
+
+    # Si no hay procesos preeminentes o la CPU está libre, asignar los demás
+    if len(ejecutando) < 1:
+        for proceso in procesos_no_preeminentes:
+            if len(ejecutando) < 1:
+                if proceso.recursos_obtenidos == proceso.recursos_requeridos:
+                    listo.remove(proceso)
+                    proceso.estado = 'Ejecutando'
+                    ejecutando.append(proceso)
+                elif recursos_disponibles(proceso, recursos_disponibles_dict):
+                    asignar_recursos(proceso, recursos_disponibles_dict)
+                    proceso.recursos_obtenidos = proceso.recursos_requeridos[:]
+                    listo.remove(proceso)
+                    proceso.estado = 'Ejecutando'
+                    ejecutando.append(proceso)
+                else:
+                    proceso.estado = 'Bloqueado'
+                    proceso.recursos_faltantes = obtener_recursos_faltantes(proceso, recursos_disponibles_dict)
+                    listo.remove(proceso)
+                    estado_simulacion['bloqueado'].append(proceso.to_dict())
 
     estado_simulacion['listo'] = [p.to_dict() for p in listo]
     estado_simulacion['ejecutando'] = [p.to_dict() for p in ejecutando]
@@ -290,7 +323,7 @@ def ejecutar_procesos(estado_simulacion):
             proceso.estado = 'Terminado'
             procesos_terminados.append(proceso)
         elif proceso.unidades_ejecutadas >= 5:
-            # Ha ejecutado 5 unidades, decidir si libera recursos
+            # Ha ejecutado 5 unidades, debe ser interrumpido
             proceso.estado = 'Listo'
             procesos_a_listo.append(proceso)
         else:
@@ -306,18 +339,22 @@ def ejecutar_procesos(estado_simulacion):
 
     for proceso in procesos_a_listo:
         ejecutando.remove(proceso)
-        if random.random() < 0.2:
-            # El proceso libera sus recursos
-            liberar_recursos(proceso, recursos_disponibles_dict)
-            proceso.recursos_obtenidos.clear()
-        # Si no libera los recursos, los mantiene
+        if not proceso.preeminencia:
+            # Solo los procesos sin preeminencia tienen probabilidad de liberar recursos
+            if random.random() < 0.2:
+                liberar_recursos(proceso, recursos_disponibles_dict)
+                proceso.recursos_obtenidos.clear()
+        # Los procesos con preeminencia retienen sus recursos
         listo.append(proceso)
         proceso.unidades_ejecutadas = 0  # Reiniciar contador de unidades ejecutadas
+
 
     estado_simulacion['ejecutando'] = [p.to_dict() for p in ejecutando]
     estado_simulacion['terminado'] = [p.to_dict() for p in terminado]
     estado_simulacion['listo'] = [p.to_dict() for p in listo]
     estado_simulacion['recursos_disponibles_dict'] = recursos_disponibles_dict
+
+
 
 def recursos_disponibles(proceso, recursos_disponibles_dict):
     for recurso in proceso.recursos_requeridos:
@@ -350,7 +387,7 @@ def generar_reporte():
         for proceso in procesos:
             if proceso:
                 recursos_obtenidos = ', '.join(proceso.recursos_obtenidos) if proceso.recursos_obtenidos else 'Ninguno'
-                reporte += f"ID: {proceso.id}, Tamaño Inicial: {proceso.tamaño_inicial}, Tamaño Restante: {proceso.tamaño}, Estado: {proceso.estado}, Recursos Obtenidos: {recursos_obtenidos}"
+                reporte += f"ID: {proceso.id}, Tamaño Inicial: {proceso.tamaño_inicial}, Tamaño Restante: {proceso.tamaño}, Estado: {proceso.estado}, Preeminencia: {proceso.preeminencia}, Recursos Obtenidos: {recursos_obtenidos}"
                 if proceso.estado == 'Bloqueado':
                     recursos_faltantes = ', '.join(proceso.recursos_faltantes)
                     reporte += f", Faltan Recursos: {recursos_faltantes}"
