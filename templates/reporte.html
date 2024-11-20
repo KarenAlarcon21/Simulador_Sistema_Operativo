@@ -4,9 +4,9 @@
 
 {% block content %}
     <h1>Reporte de Procesos</h1>
-
-    <table class="table table-bordered">
-        <thead class="table-dark">
+    <br>
+    <table class="table table-bordered" style="width: 100%;">
+        <thead class="table-dark" style="text-align: center;">
             <tr>
                 <th>ID</th>
                 <th>Tamaño Inicial</th>
@@ -19,8 +19,8 @@
         </thead>
         <tbody>
             {% for proceso in reporte_datos %}
-            <tr>
-                <td>{{ proceso.id }}</td>
+            <tr style="text-align: center;">
+                <td>{{ (proceso.id).upper() }}</td>
                 <td>{{ proceso.tamaño_inicial }}</td>
                 <td>{{ proceso.tamaño_restante }}</td>
                 <td>{{ proceso.estado }}</td>
