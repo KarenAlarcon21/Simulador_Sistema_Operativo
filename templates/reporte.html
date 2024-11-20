@@ -4,7 +4,34 @@
 
 {% block content %}
     <h1>Reporte de Procesos</h1>
-    <pre>{{ reporte }}</pre>
+
+    <table class="table table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Tamaño Inicial</th>
+                <th>Tamaño Restante</th>
+                <th>Estado</th>
+                <th>Preeminencia</th>
+                <th>Recursos Obtenidos</th>
+                <th>Faltan Recursos</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for proceso in reporte_datos %}
+            <tr>
+                <td>{{ proceso.id }}</td>
+                <td>{{ proceso.tamaño_inicial }}</td>
+                <td>{{ proceso.tamaño_restante }}</td>
+                <td>{{ proceso.estado }}</td>
+                <td>{{ proceso.preeminencia }}</td>
+                <td>{{ proceso.recursos_obtenidos }}</td>
+                <td>{{ proceso.recursos_faltantes }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
     <p>
         <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver al inicio</a>
     </p>

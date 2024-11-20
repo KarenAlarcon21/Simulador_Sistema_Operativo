@@ -381,18 +381,23 @@ def liberar_recursos(proceso, recursos_disponibles_dict):
 @app.route('/generar_reporte')
 def generar_reporte():
     estado_simulacion = get_estado_simulacion()
-    reporte = "\n\n"
+    reporte_datos = []
+
     for estado in ESTADOS:
         procesos = [Proceso.from_dict(p) for p in estado_simulacion[estado.lower()]]
         for proceso in procesos:
-            if proceso:
-                recursos_obtenidos = ', '.join(proceso.recursos_obtenidos) if proceso.recursos_obtenidos else 'Ninguno'
-                reporte += f"ID: {proceso.id}, Tamaño Inicial: {proceso.tamaño_inicial}, Tamaño Restante: {proceso.tamaño}, Estado: {proceso.estado}, Preeminencia: {proceso.preeminencia}, Recursos Obtenidos: {recursos_obtenidos}"
-                if proceso.estado == 'Bloqueado':
-                    recursos_faltantes = ', '.join(proceso.recursos_faltantes)
-                    reporte += f", Faltan Recursos: {recursos_faltantes}"
-                reporte += "\n"
-    return render_template('reporte.html', reporte=reporte)
+            proceso_info = {
+                'id': proceso.id,
+                'tamaño_inicial': proceso.tamaño_inicial,
+                'tamaño_restante': proceso.tamaño,
+                'estado': proceso.estado,
+                'preeminencia': proceso.preeminencia,
+                'recursos_obtenidos': ', '.join(proceso.recursos_obtenidos) if proceso.recursos_obtenidos else 'Ninguno',
+                'recursos_faltantes': ', '.join(proceso.recursos_faltantes) if proceso.recursos_faltantes else '',
+            }
+            reporte_datos.append(proceso_info)
+
+    return render_template('reporte.html', reporte_datos=reporte_datos)
 
 @app.route('/reiniciar_simulacion')
 def reiniciar_simulacion():
