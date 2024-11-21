@@ -1,102 +1,132 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Simulación de Procesos</title>
-    <script>
-        let intervalId;
-        let simulacionPausada = false; 
+{% extends "base.html" %}
 
-        function obtenerEstado() {
-            fetch('/obtener_estado')
-                .then(response => response.json())
-                .then(data => {
-                    actualizarInterfaz(data);
-                    if (data.simulacion_en_curso && !simulacionPausada) {
-                        setTimeout(avanzarSimulacion, 1000);  // Esperar 1 segundo antes de avanzar
-                    } else if (data.simulacion_pausada) {
-                        simulacionPausada = true;
-                    } else {
-                        alert('Simulación completada');
-                    }
-                });
-        }
+{% block title %}Simulación de Procesos{% endblock %}
 
-        function avanzarSimulacion() {
-            if (simulacionPausada) {
-                return;
-            }
-            fetch('/avanzar_simulacion')
-                .then(response => response.json())
-                .then(data => {
-                    actualizarInterfaz(data);
-                    if (data.simulacion_en_curso && !simulacionPausada) {
-                        setTimeout(avanzarSimulacion, 1000);  // Esperar 1 segundo antes de avanzar
-                    } else if (data.simulacion_pausada) {
-                        simulacionPausada = true;
-                    } else {
-                        alert('Simulación completada');
-                    }
-                });
-        }
+{% block content %}
+<h1 class="text-center my-4">Simulación de Procesos</h1>
+<div id="contenedor-simulacion"></div>
 
-        function actualizarInterfaz(data) {
-            const contenedor = document.getElementById('contenedor-simulacion');
-            contenedor.innerHTML = '';
+<p>
+    <button class="btn btn-primary" id="boton-volver">
+        Pausar Simulación
+    </button>
+</p>
 
-            const tabla = document.createElement('table');
-            tabla.border = '1';
-            tabla.cellPadding = '5';
-            tabla.cellSpacing = '0';
+<style>
+    /* Forzar los bordes de las celdas */
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
 
-            const headerRow = document.createElement('tr');
-            data.estados.forEach(estado => {
-                const th = document.createElement('th');
-                th.innerText = estado;
-                headerRow.appendChild(th);
+    th, td {
+        border: 1px solid #dee2e6; /* Color de los bordes */
+        padding: 8px; /* Espaciado interno */
+    }
+
+    /* Personalización del encabezado */
+    th {
+        background-color: #222529; /* Oscuro */
+        color: #ffffff; /* Blanco */
+        text-align: center; /* Centramos el texto */
+    }
+</style>
+
+<script>
+    let intervalId;
+    let simulacionPausada = false;
+
+    function obtenerEstado() {
+        fetch('/obtener_estado')
+            .then(response => response.json())
+            .then(data => {
+                actualizarInterfaz(data);
+                if (data.simulacion_en_curso && !simulacionPausada) {
+                    setTimeout(avanzarSimulacion, 1000); // Esperar 1 segundo antes de avanzar
+                } else if (data.simulacion_pausada) {
+                    simulacionPausada = true;
+                } else {
+                    alert('Simulación completada');
+                }
             });
-            tabla.appendChild(headerRow);
+    }
 
-            const dataRow = document.createElement('tr');
-            data.estados.forEach(estado => {
-                const td = document.createElement('td');
-                td.vAlign = 'top';
-                const procesos = data.procesos[estado];
-                procesos.forEach(proceso => {
-                    const p = document.createElement('p');
-                    p.innerHTML = `
-                        <strong>ID:</strong> ${proceso.id}<br>
-                        <strong>Tamaño Inicial:</strong> ${proceso.tamaño_inicial}<br>
-                        <strong>Tamaño Restante:</strong> ${proceso.tamaño}<br>
-                        <strong>Estado:</strong> ${proceso.estado}<br>
-                        <strong>Recursos Requeridos:</strong> ${proceso.recursos_requeridos}<br>
-                        <strong>Recursos Obtenidos:</strong> ${proceso.recursos_obtenidos}<br>
-                        <strong>Preeminencia:</strong> ${proceso.preeminencia}<br>
-                        ${proceso.estado === 'Bloqueado' ? `<strong>Faltan Recursos:</strong> ${proceso.recursos_faltantes}<br>` : ''}
-                    `;
-                    td.appendChild(p);
-                    const hr = document.createElement('hr');
-                    td.appendChild(hr);
-                });
-                dataRow.appendChild(td);
+    function avanzarSimulacion() {
+        if (simulacionPausada) {
+            return;
+        }
+        fetch('/avanzar_simulacion')
+            .then(response => response.json())
+            .then(data => {
+                actualizarInterfaz(data);
+                if (data.simulacion_en_curso && !simulacionPausada) {
+                    setTimeout(avanzarSimulacion, 1000); // Esperar 1 segundo antes de avanzar
+                } else if (data.simulacion_pausada) {
+                    simulacionPausada = true;
+                } else {
+                    alert('Simulación completada');
+                }
             });
-            tabla.appendChild(dataRow);
+    }
 
-            contenedor.appendChild(tabla);
-        }
+    function actualizarInterfaz(data) {
+        const contenedor = document.getElementById('contenedor-simulacion');
+        contenedor.innerHTML = '';
 
-        function pausarSimulacion() {
-            simulacionPausada = true;
-            fetch('/pausar_simulacion');
-        }
+        const tabla = document.createElement('table');
+        tabla.className = 'table';
 
-        document.addEventListener('DOMContentLoaded', function() {
-            obtenerEstado();
+        // Encabezado oscuro
+        const headerRow = document.createElement('tr');
+        data.estados.forEach(estado => {
+            const th = document.createElement('th');
+            th.innerText = estado;
+            headerRow.appendChild(th);
         });
-    </script>
-</head>
-<body>
-    <h1>Simulación de Procesos</h1>
-    <div id="contenedor-simulacion"></div>
-    <p><a href="{{ url_for('index') }}" onclick="pausarSimulacion()">Volver al inicio</a></p>
-</body>
-</html>
+        tabla.appendChild(headerRow);
+
+        // Filas de datos
+        const dataRow = document.createElement('tr');
+        data.estados.forEach(estado => {
+            const td = document.createElement('td');
+            td.vAlign = 'top';
+            const procesos = data.procesos[estado];
+            procesos.forEach(proceso => {
+                const p = document.createElement('p');
+                p.innerHTML = `
+                    <strong>ID:</strong> ${proceso.id}<br>
+                    <strong>Tamaño Inicial:</strong> ${proceso.tamaño_inicial}<br>
+                    <strong>Tamaño Restante:</strong> ${proceso.tamaño}<br>
+                    <strong>Estado:</strong> ${proceso.estado}<br>
+                    <strong>Recursos Requeridos:</strong> ${proceso.recursos_requeridos}<br>
+                    <strong>Recursos Obtenidos:</strong> ${proceso.recursos_obtenidos}<br>
+                    <strong>Preeminencia:</strong> ${proceso.preeminencia}<br>
+                    ${proceso.estado === 'Bloqueado' ? `<strong>Faltan Recursos:</strong> ${proceso.recursos_faltantes}<br>` : ''}
+                `;
+                td.appendChild(p);
+                const hr = document.createElement('hr');
+                td.appendChild(hr);
+            });
+            dataRow.appendChild(td);
+        });
+        tabla.appendChild(dataRow);
+
+        contenedor.appendChild(tabla);
+    }
+
+    function pausarSimulacion() {
+        simulacionPausada = true;
+        fetch('/pausar_simulacion');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const botonVolver = document.getElementById('boton-volver');
+        botonVolver.addEventListener('click', function () {
+            pausarSimulacion(); // Pausar la simulación
+            window.location.href = "{{ url_for('index') }}"; // Redirigir al inicio
+        });
+
+        obtenerEstado(); // Iniciar la simulación
+    });
+</script>
+{% endblock %}
