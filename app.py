@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from memory_manager import MAX_PROCESS_SIZE
+import memory_manager
 import random
 import time
 
@@ -97,13 +99,25 @@ def agregar_proceso():
             error = f"Ya existe un proceso con el ID '{id_proceso}'. Por favor, elija otro ID."
             return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
 
+        # Crear el proceso en la simulación del sistema operativo
         nuevo_proceso = Proceso(id_proceso, tamaño, recursos_requeridos, preeminencia=preeminencia)
         nuevo_proceso.estado = 'Nuevo'
         estado_simulacion['nuevo'].append(nuevo_proceso.to_dict())
         guardar_estado_simulacion(estado_simulacion)
+
+        # Asignar memoria al proceso en la simulación de memoria
+        success, msg = memory_manager.create_process_memory(id_proceso, float(tamaño))
+        if not success:
+            # Si no se pudo asignar memoria, eliminar el proceso del estado actual
+            estado_simulacion['nuevo'].pop()
+            guardar_estado_simulacion(estado_simulacion)
+            error = f"No se pudo asignar memoria al proceso: {msg}"
+            return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
+
         return redirect(url_for('index'))
     else:
         return render_template('agregar_proceso.html', recursos=RECURSOS_DISPONIBLES)
+    
 
 def id_ya_existe(id_proceso, estado_simulacion):
     for estado in ESTADOS:
@@ -338,12 +352,24 @@ def ejecutar_procesos(estado_simulacion):
     procesos_a_listo = []
     procesos_terminados = []
     for proceso in ejecutando:
+         # Almacenar el tamaño anterior
+        tamaño_anterior = proceso.tamaño
         # Reducir tamaño en 1 unidad por ciclo
         proceso.tamaño -= 1
         proceso.unidades_ejecutadas += 1
+
+        # Calcular la cantidad reducida
+        cantidad_reducida = tamaño_anterior - proceso.tamaño
+        # Actualizar la asignación de memoria
+        success, msg = memory_manager.reduce_process_size(proceso.id, cantidad_reducida)
+        if not success:
+            print(f"Error al reducir el tamaño del proceso en memoria: {msg}")
+
         if proceso.tamaño <= 0:
             proceso.estado = 'Terminado'
             procesos_terminados.append(proceso)
+            # Eliminar el proceso de la memoria
+            memory_manager.delete_process_memory(proceso.id)
         elif proceso.unidades_ejecutadas >= 5:
             # Ha ejecutado 5 unidades, debe ser interrumpido
             proceso.estado = 'Listo'
@@ -371,11 +397,10 @@ def ejecutar_procesos(estado_simulacion):
         proceso.unidades_ejecutadas = 0  # Reiniciar contador de unidades ejecutadas
 
 
-    estado_simulacion['ejecutando'] = [p.to_dict() for p in ejecutando]
-    estado_simulacion['terminado'] = [p.to_dict() for p in terminado]
-    estado_simulacion['listo'] = [p.to_dict() for p in listo]
+    estado_simulacion['ejecutando'] = [p.to_dict() for p in ejecutando if p not in procesos_terminados and p not in procesos_a_listo]
+    estado_simulacion['terminado'].extend([p.to_dict() for p in procesos_terminados])
+    estado_simulacion['listo'].extend([p.to_dict() for p in procesos_a_listo])
     estado_simulacion['recursos_disponibles_dict'] = recursos_disponibles_dict
-
 
 
 def recursos_disponibles(proceso, recursos_disponibles_dict):
@@ -421,11 +446,20 @@ def generar_reporte():
 
     return render_template('reporte.html', reporte_datos=reporte_datos)
 
+@app.route('/memoria')
+def memoria():
+    message = request.args.get('message', '')
+    return render_template('memoria.html', ram=memory_manager.ram, rom=memory_manager.rom, processes=memory_manager.processes, message=message)
+
 @app.route('/reiniciar_simulacion')
 def reiniciar_simulacion():
     # Reiniciar el estado de la simulación
     session.pop('estado_simulacion', None)
     return redirect(url_for('index'))
+
+# Inicializar la memoria una vez al inicio
+memory_manager.init_memory()
+
 
 if __name__ == '__main__':
     app.run(debug=True)

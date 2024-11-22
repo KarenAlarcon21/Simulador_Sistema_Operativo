@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Memoria{% endblock %}
+
+{% block content %}
+<h1>Simulador de Gestión de Memoria</h1>
+
+{% if message %}
+    <p style="color:red;">{{ message }}</p>
+{% endif %}
+
+<h2>RAM</h2>
+<div class="matrix ram" style="grid-template-columns: repeat({{ ram[0]|length }}, 30px);">
+    {% for row in ram %}
+        {% for cell in row %}
+            {% if cell.process %}
+                {% if cell.process == 'S.O.' %}
+                    <div class="cell so">
+                        S.O.
+                    </div>
+                {% else %}
+                    <div class="cell" style="background-color: {{ cell.process.color }};">
+                        {{ cell.process.name }}
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="cell"></div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+</div>
+
+
+<h2>ROM</h2>
+<div class="matrix rom" style="grid-template-columns: repeat({{ rom[0]|length }}, 30px);">
+    {% for row in rom %}
+        {% for cell in row %}
+            {% if cell.process %}
+                <div class="cell" style="background-color: {{ cell.process.color }};">
+                    {{ cell.process.name }}
+                </div>
+            {% else %}
+                <div class="cell"></div>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+</div>
+
+
+<h2>Procesos en Memoria</h2>
+<ul class="process-list">
+    {% for process in processes %}
+        <li class="process-item">
+            <span style="background-color: {{ process.color }}; padding: 5px; color: white;">
+                {{ process.name }} - Tamaño: {{ process.size }}
+            </span>
+        </li>
+    {% endfor %}
+</ul>
+
+<style>
+    .matrix {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, 30px);
+        gap: 2px;
+    }
+    .cell {
+        width: 30px;
+        height: 30px;
+        background-color: lightgray;
+        text-align: center;
+        line-height: 30px;
+        font-size: 12px;
+        color: white;
+        border: 1px solid #ccc;
+    }
+    .ram {
+        margin-bottom: 20px;
+    }
+    .rom {
+        margin-bottom: 20px;
+    }
+    .process-list {
+        list-style-type: none;
+        padding: 0;
+    }
+    .process-item {
+        margin-bottom: 5px;
+    }
+    .delete-button {
+        background-color: red;
+        color: white;
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+    }
+    .delete-button:hover {
+        background-color: darkred;
+    }
+    .reduce-button {
+        background-color: orange;
+        color: white;
+        border: none;
+        padding: 5px;
+        cursor: pointer;
+    }
+    .reduce-button:hover {
+        background-color: darkorange;
+    }
+    .cell.so {
+        background-color: black;
+        color: white;
+    }
+</style>
+{% endblock %}
