@@ -9,7 +9,13 @@
     <p style="color:red;">{{ message }}</p>
 {% endif %}
 
-<h2>RAM</h2>
+<br>
+
+<!-- Contenedor Flex para alinear RAM y ROM horizontalmente -->
+<div style="display: flex; gap: 20px;">
+
+    <!-- RAM -->
+    <h2>RAM</h2>
     <div class="matrix ram" style="grid-template-columns: repeat({{ ram[0]|length }}, 55px);">
         {% for row in ram %}
             {% for cell in row %}
@@ -30,8 +36,8 @@
         {% endfor %}
     </div>
 
-
-<h2>ROM</h2>
+    <!-- ROM -->
+    <h2>ROM</h2>
     <div class="matrix rom" style="grid-template-columns: repeat({{ rom[0]|length }}, 55px);">
         {% for row in rom %}
             {% for cell in row %}
@@ -46,6 +52,7 @@
         {% endfor %}
     </div>
 
+</div>
 
 <h2>Procesos en Memoria</h2>
 <ul class="process-list">
@@ -65,16 +72,16 @@
         gap: 2px;
     }
     .cell {
-            width: 55px;
-            height: 55px;
-            background-color: lightgray;
-            text-align: center;
-            line-height: 55px;
-            font-size: 20px;
-            color: white;
-            border: 1px solid #ccc;
-            position: relative;
-        }
+        width: 55px;
+        height: 55px;
+        background-color: lightgray;
+        text-align: center;
+        line-height: 55px;
+        font-size: 20px;
+        color: white;
+        border: 1px solid #ccc;
+        position: relative;
+    }
     .ram {
         margin-bottom: 55px;
     }
@@ -113,4 +120,5 @@
         color: white;
     }
 </style>
+
 {% endblock %}
