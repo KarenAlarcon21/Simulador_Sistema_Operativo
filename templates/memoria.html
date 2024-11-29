@@ -10,41 +10,41 @@
 {% endif %}
 
 <h2>RAM</h2>
-<div class="matrix ram" style="grid-template-columns: repeat({{ ram[0]|length }}, 30px);">
-    {% for row in ram %}
-        {% for cell in row %}
-            {% if cell.process %}
-                {% if cell.process == 'S.O.' %}
-                    <div class="cell so">
-                        S.O.
-                    </div>
+    <div class="matrix ram" style="grid-template-columns: repeat({{ ram[0]|length }}, 55px);">
+        {% for row in ram %}
+            {% for cell in row %}
+                {% if cell.process %}
+                    {% if cell.process == 'S.O.' %}
+                        <div class="cell so">
+                            S.O.
+                        </div>
+                    {% else %}
+                        <div class="cell" style="background-color: {{ cell.process.color }}; position: relative;">
+                            <span style="font-size: 20px;">{{ cell.frame_id }}</span>
+                        </div>
+                    {% endif %}
                 {% else %}
-                    <div class="cell" style="background-color: {{ cell.process.color }};">
-                        {{ cell.process.name }}
-                    </div>
+                    <div class="cell"></div>
                 {% endif %}
-            {% else %}
-                <div class="cell"></div>
-            {% endif %}
+            {% endfor %}
         {% endfor %}
-    {% endfor %}
-</div>
+    </div>
 
 
 <h2>ROM</h2>
-<div class="matrix rom" style="grid-template-columns: repeat({{ rom[0]|length }}, 30px);">
-    {% for row in rom %}
-        {% for cell in row %}
-            {% if cell.process %}
-                <div class="cell" style="background-color: {{ cell.process.color }};">
-                    {{ cell.process.name }}
-                </div>
-            {% else %}
-                <div class="cell"></div>
-            {% endif %}
+    <div class="matrix rom" style="grid-template-columns: repeat({{ rom[0]|length }}, 55px);">
+        {% for row in rom %}
+            {% for cell in row %}
+                {% if cell.process %}
+                    <div class="cell" style="background-color: {{ cell.process.color }}; position: relative;">
+                        <span style="font-size: 20px;">{{ cell.frame_id }}</span>
+                    </div>
+                {% else %}
+                    <div class="cell"></div>
+                {% endif %}
+            {% endfor %}
         {% endfor %}
-    {% endfor %}
-</div>
+    </div>
 
 
 <h2>Procesos en Memoria</h2>
@@ -52,7 +52,7 @@
     {% for process in processes %}
         <li class="process-item">
             <span style="background-color: {{ process.color }}; padding: 5px; color: white;">
-                {{ process.name }} - Tamaño: {{ process.size }}
+                {{ process.name }} - Tamaño: {{ process.size }} - Marcos: {{ process.frames|length }}
             </span>
         </li>
     {% endfor %}
@@ -61,24 +61,25 @@
 <style>
     .matrix {
         display: grid;
-        grid-template-columns: repeat(auto-fill, 30px);
+        grid-template-columns: repeat(auto-fill, 50px);
         gap: 2px;
     }
     .cell {
-        width: 30px;
-        height: 30px;
-        background-color: lightgray;
-        text-align: center;
-        line-height: 30px;
-        font-size: 12px;
-        color: white;
-        border: 1px solid #ccc;
-    }
+            width: 55px;
+            height: 55px;
+            background-color: lightgray;
+            text-align: center;
+            line-height: 55px;
+            font-size: 20px;
+            color: white;
+            border: 1px solid #ccc;
+            position: relative;
+        }
     .ram {
-        margin-bottom: 20px;
+        margin-bottom: 55px;
     }
     .rom {
-        margin-bottom: 20px;
+        margin-bottom: 55px;
     }
     .process-list {
         list-style-type: none;

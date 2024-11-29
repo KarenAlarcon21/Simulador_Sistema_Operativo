@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from memory_manager import MAX_PROCESS_SIZE
 import memory_manager
 import random
+import math
 import time
 
 app = Flask(__name__)
@@ -424,6 +425,11 @@ def asignar_recursos(proceso, recursos_disponibles_dict):
 def liberar_recursos(proceso, recursos_disponibles_dict):
     for recurso in proceso.recursos_requeridos:
         recursos_disponibles_dict[recurso] = True
+
+# Crear el filtro personalizado
+@app.template_filter('ceil')
+def ceil_filter(value):
+    return math.ceil(value)
 
 @app.route('/generar_reporte')
 def generar_reporte():
