@@ -15,6 +15,8 @@
                 <th>Preeminencia</th>
                 <th>Recursos Obtenidos</th>
                 <th>Faltan Recursos</th>
+                <th>Paginas Iniciales</th>
+                <th>Paginas restantes</th>
             </tr>
         </thead>
         <tbody>
@@ -27,6 +29,8 @@
                 <td>{{ proceso.preeminencia }}</td>
                 <td>{{ proceso.recursos_obtenidos }}</td>
                 <td>{{ proceso.recursos_faltantes }}</td>
+                <td>{{ (proceso.tamaño_inicial/2.5) | ceil }}</td>
+                <td>{{ (proceso.tamaño_restante/2.5) | ceil }}</td>
             </tr>
             {% endfor %}
         </tbody>
