@@ -17,7 +17,7 @@ ram = []
 rom = []
 
 def init_memory():
-    global ram, rom
+    global ram, rom, processes, available_colors
     ram = []
 
     # Primera fila ocupada por el S.O.
@@ -31,6 +31,12 @@ def init_memory():
 
     # Inicializa la matriz de ROM
     rom = [[{'process': None} for _ in range(ROM_COLS)] for _ in range(ROM_ROWS)]
+
+    # Vaciar la lista de procesos
+    processes.clear()
+
+    # Restaurar la lista de colores disponibles
+    available_colors = PREDEFINED_COLORS.copy()
 
 # Lista para almacenar los procesos creados
 processes = []

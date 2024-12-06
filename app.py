@@ -459,8 +459,12 @@ def memoria():
 
 @app.route('/reiniciar_simulacion')
 def reiniciar_simulacion():
-    # Reiniciar el estado de la simulación
+    # Reinicia el estado de la simulación de procesos
     session.pop('estado_simulacion', None)
+    
+    # Reinicia el estado de la memoria
+    memory_manager.init_memory()  # Esta es la llamada para limpiar la memoria
+
     return redirect(url_for('index'))
 
 # Inicializar la memoria una vez al inicio
