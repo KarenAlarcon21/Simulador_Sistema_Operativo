@@ -17,20 +17,26 @@ ram = []
 rom = []
 
 def init_memory():
-    global ram, rom
+    global ram, rom, processes, available_colors
     ram = []
 
     # Primera fila ocupada por el S.O.
-    so_row = [{'process': 'S.O.'} for _ in range(RAM_COLS)]
+    so_row = [{'process': 'S.O.', 'frame_id': 'S.O.-0'} for _ in range(RAM_COLS)]
     ram.append(so_row)
 
     # Resto de las filas inicializadas como libres
     for _ in range(RAM_ROWS - 1):
-        row = [{'process': None} for _ in range(RAM_COLS)]
+        row = [{'process': None, 'frame_id': None} for _ in range(RAM_COLS)]
         ram.append(row)
 
     # Inicializa la matriz de ROM
-    rom = [[{'process': None} for _ in range(ROM_COLS)] for _ in range(ROM_ROWS)]
+    rom = [[{'process': None, 'frame_id': None} for _ in range(ROM_COLS)] for _ in range(ROM_ROWS)]
+
+    # Vaciar la lista de procesos
+    processes.clear()
+
+    # Restaurar la lista de colores disponibles
+    available_colors = PREDEFINED_COLORS.copy()
 
 # Lista para almacenar los procesos creados
 processes = []
@@ -68,22 +74,19 @@ def create_process_memory(name, size):
     if len(ram_positions) < ram_frames_needed or len(rom_positions) < rom_frames_needed:
         return False, 'No hay suficiente espacio en memoria.'
 
-    # Asignamos los marcos al proceso y registramos las posiciones con identificador de marco
-    frame_number = 1  # Iniciamos la numeración de marcos desde 1
-
-    for (i, j) in ram_positions:
-        frame_id = f"{name}-{frame_number}"  # Creamos el identificador de marco
+    # Asignamos los marcos a RAM
+    for idx, (i, j) in enumerate(ram_positions, start=1):
+        frame_id = f"{name}-{idx}"
         ram[i][j]['process'] = process
-        ram[i][j]['frame_id'] = frame_id  # Asignamos el identificador de marco a la celda
+        ram[i][j]['frame_id'] = frame_id
         process.frames.append({'type': 'RAM', 'i': i, 'j': j, 'frame_id': frame_id})
-        frame_number += 1
 
-    for (i, j) in rom_positions:
-        frame_id = f"{name}-{frame_number}"  # Creamos el identificador de marco
+    # Asignamos los marcos a ROM
+    for idx, (i, j) in enumerate(rom_positions, start=ram_frames_needed + 1):
+        frame_id = f"{name}-{idx}"
         rom[i][j]['process'] = process
-        rom[i][j]['frame_id'] = frame_id  # Asignamos el identificador de marco a la celda
+        rom[i][j]['frame_id'] = frame_id
         process.frames.append({'type': 'ROM', 'i': i, 'j': j, 'frame_id': frame_id})
-        frame_number += 1
 
     processes.append(process)
     return True, 'Proceso creado exitosamente.'
@@ -135,98 +138,127 @@ def delete_process_memory(name):
     else:
         return False
 
+def extract_frame_number(frame):
+    """
+    Extrae el número del frame_id. Asume que frame_id sigue el formato "ProcesoX-Y",
+    donde Y es un número entero.
+    """
+    if isinstance(frame, dict) and 'frame_id' in frame:
+        try:
+            return int(frame['frame_id'].split('-')[-1])
+        except (IndexError, ValueError):
+            return -1  # Valor predeterminado en caso de formato incorrecto
+    else:
+        return -1  # Valor predeterminado si frame no es dict o no tiene frame_id
+
 def reduce_process_size(name, amount):
     global processes
     process = next((p for p in processes if p.name == name), None)
     if not process:
-        return False, f'El proceso {name} no existe.'
-
-    # Reducimos el tamaño del proceso
-    new_size = max(0, process.size - amount)
-    if new_size == process.size:
+        return False, f'El proceso "{name}" no existe.'
+    
+    # Verificar que todos los marcos sean diccionarios
+    for frame in process.frames:
+        if not isinstance(frame, dict):
+            return False, 'Error: Algunos marcos no están correctamente estructurados como diccionarios.'
+    
+    old_size = process.size
+    new_size = max(0, old_size - amount)
+    
+    if new_size == old_size:
         return False, 'No se puede reducir más el tamaño del proceso.'
-
-    old_total_frames = int(process.size // FRAME_SIZE)
-    if process.size % FRAME_SIZE != 0:
-        old_total_frames += 1
-
+    
+    # Cálculo de marcos antes y después de la reducción
+    old_total_frames = int(old_size // FRAME_SIZE) + (1 if old_size % FRAME_SIZE != 0 else 0)
+    new_total_frames = int(new_size // FRAME_SIZE) + (1 if new_size % FRAME_SIZE != 0 else 0)
+    frames_to_remove = old_total_frames - new_total_frames
+    
+    # Actualizamos el tamaño del proceso
     process.size = new_size
-
+    
+    # Si el tamaño es cero, eliminamos el proceso por completo
     if process.size == 0:
-        # Si el tamaño es cero, eliminamos el proceso
         delete_process_memory(name)
-        return True, f'El proceso {name} ha sido eliminado porque su tamaño es cero.'
-
-    new_total_frames = int(process.size // FRAME_SIZE)
-    if process.size % FRAME_SIZE != 0 and process.size % FRAME_SIZE != 0.0:
-        new_total_frames += 1
-
-    frames_to_remove = int(old_total_frames - new_total_frames)
-
+        return True, f'El proceso "{name}" ha sido eliminado porque su tamaño es cero.'
+    
+    # Si no se debe remover ningún marco
     if frames_to_remove <= 0:
         return True, 'El tamaño del proceso ha sido reducido, no se liberaron marcos.'
-
-    # Liberamos marcos en RAM primero
+    
+    # Paso 1: Mover marcos de RAM a ROM
     ram_frames = [frame for frame in process.frames if frame['type'] == 'RAM']
-    rom_frames = [frame for frame in process.frames if frame['type'] == 'ROM']
-
-    frames_removed = 0
-    frames_to_delete = []
-
-    # Liberamos marcos en RAM
-    for frame in ram_frames:
-        if frames_removed < frames_to_remove:
-            i, j = frame['i'], frame['j']
-            ram[i][j]['process'] = None
-            ram[i][j]['frame_id'] = None
-            frames_to_delete.append(frame)
-            frames_removed += 1
-        else:
-            break
-
-    # Si aún necesitamos liberar más marcos, liberamos en ROM
-    if frames_removed < frames_to_remove:
-        for frame in rom_frames:
-            if frames_removed < frames_to_remove:
-                i, j = frame['i'], frame['j']
-                rom[i][j]['process'] = None
-                rom[i][j]['frame_id'] = None
-                frames_to_delete.append(frame)
-                frames_removed += 1
+    frames_to_move = ram_frames[:frames_to_remove]
+    
+    # Buscamos espacio libre en ROM para colocar estos marcos
+    rom_positions = get_free_frames(rom, len(frames_to_move))
+    if len(rom_positions) < len(frames_to_move):
+        return False, 'No hay suficiente espacio en ROM para bajar las páginas.'
+    
+    # Movemos los marcos de RAM a ROM
+    for idx, frame in enumerate(frames_to_move):
+        # Limpiamos la celda en RAM
+        ram_i, ram_j = frame['i'], frame['j']
+        ram[ram_i][ram_j]['process'] = None
+        ram[ram_i][ram_j]['frame_id'] = None
+    
+        # Asignamos el marco a la ROM
+        rom_i, rom_j = rom_positions[idx]
+        rom[rom_i][rom_j]['process'] = process
+        rom[rom_i][rom_j]['frame_id'] = frame['frame_id']
+    
+        # Actualizamos la información del marco en el objeto del proceso
+        frame['type'] = 'ROM'
+        frame['i'] = rom_i
+        frame['j'] = rom_j
+    
+    # Paso 2: Subir un marco desde ROM a RAM solo si frames_to_remove es 1 y new_total_frames > 2
+    if frames_to_remove == 1 and new_total_frames > 2:
+        # Recalcular las listas después de mover marcos a ROM
+        frames_in_ram = [f for f in process.frames if f['type'] == 'RAM']
+        frames_in_rom = [f for f in process.frames if f['type'] == 'ROM']
+        
+        if len(frames_in_ram) < 3 and frames_in_rom:
+            # Ordenar los marcos en ROM por frame_id de menor a mayor
+            frames_in_rom_sorted = sorted(
+                frames_in_rom,
+                key=lambda f: extract_frame_number(f)
+            )
+            
+            # Obtener el frame_id máximo en RAM
+            ram_frame_ids = [extract_frame_number(f) for f in frames_in_ram]
+            max_ram_id = max(ram_frame_ids) if ram_frame_ids else -1
+            
+            # Filtrar marcos en ROM con frame_id mayor que max_ram_id
+            eligible_rom_frames = [
+                f for f in frames_in_rom_sorted
+                if extract_frame_number(f) > max_ram_id
+            ]
+            
+            # Si hay marcos elegibles, seleccionar el de menor frame_id entre ellos
+            if eligible_rom_frames:
+                frame_to_move_up = eligible_rom_frames[0]
             else:
-                break
-
-    # Eliminamos los marcos liberados de la lista de marcos del proceso
-    process.frames = [frame for frame in process.frames if frame not in frames_to_delete]
-
-    # Contamos cuántos marcos en RAM tiene el proceso actualmente
-    current_ram_frames = len([frame for frame in process.frames if frame['type'] == 'RAM'])
-
-    # Si el proceso tiene menos de 3 marcos en RAM, intentamos mover marcos de ROM a RAM
-    max_ram_frames = 3
-    frames_needed_in_ram = max_ram_frames - current_ram_frames
-
-    if frames_needed_in_ram > 0:
-        # Obtenemos posiciones libres en RAM
-        free_ram_positions = get_free_frames(ram, frames_needed_in_ram, start_row=1)
-        # Obtenemos marcos en ROM que podemos mover
-        rom_frames_to_move = [frame for frame in process.frames if frame['type'] == 'ROM'][:len(free_ram_positions)]
-
-        for idx, frame in enumerate(rom_frames_to_move):
-            # Obtenemos una posición libre en RAM
-            ram_i, ram_j = free_ram_positions[idx]
-            # Posición actual en ROM
-            rom_i, rom_j = frame['i'], frame['j']
-
-            # Movemos el marco de ROM a RAM
+                # Si no hay marcos con frame_id mayor, seleccionar el de menor frame_id en ROM
+                frame_to_move_up = frames_in_rom_sorted[0]
+            
+            # Buscar una posición libre en RAM (empezando desde la fila 1 para reservar la primera fila al S.O.)
+            free_ram_positions = get_free_frames(ram, 1, start_row=1)
+            if len(free_ram_positions) < 1:
+                return False, 'No hay suficiente espacio en RAM para subir una página desde ROM.'
+            
+            ram_i, ram_j = free_ram_positions[0]
+            
+            # Liberar la posición en ROM
+            rom[frame_to_move_up['i']][frame_to_move_up['j']]['process'] = None
+            rom[frame_to_move_up['i']][frame_to_move_up['j']]['frame_id'] = None
+            
+            # Asignar el marco en RAM
             ram[ram_i][ram_j]['process'] = process
-            ram[ram_i][ram_j]['frame_id'] = frame['frame_id']
-            rom[rom_i][rom_j]['process'] = None
-            rom[rom_i][rom_j]['frame_id'] = None
-
-            # Actualizamos las posiciones en la lista de marcos del proceso
-            frame['type'] = 'RAM'
-            frame['i'] = ram_i
-            frame['j'] = ram_j
-
-    return True, 'El tamaño del proceso ha sido reducido y los marcos han sido actualizados.'
+            ram[ram_i][ram_j]['frame_id'] = frame_to_move_up['frame_id']
+            
+            # Actualizar la información del marco en el objeto proceso
+            frame_to_move_up['type'] = 'RAM'
+            frame_to_move_up['i'] = ram_i
+            frame_to_move_up['j'] = ram_j
+    
+    return True, 'El tamaño del proceso ha sido reducido, las páginas sobrantes han sido bajadas a ROM y un marco ha sido subido a RAM.'
