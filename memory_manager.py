@@ -9,7 +9,7 @@ FRAME_SIZE = 2.5
 MAX_PROCESS_SIZE = 65
 
 # Lista predeterminada de colores
-PREDEFINED_COLORS = ['#5dade2', '#76d7c4', '#e74c3c', '#0e03f5', '#1df503', '#f4d03f']
+PREDEFINED_COLORS = ['#5dade2', '#76d7c4', '#e74c3c', '#0e03f5', '#1df503', '#f4d03f','#e90075','#b400e9']
 available_colors = PREDEFINED_COLORS.copy()
 
 # Inicializa la matriz de RAM y ROM
