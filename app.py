@@ -3,7 +3,6 @@ from memory_manager import MAX_PROCESS_SIZE
 import memory_manager
 import random
 import math
-import time
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_para_sesiones'

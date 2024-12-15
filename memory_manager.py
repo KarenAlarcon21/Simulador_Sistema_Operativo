@@ -1,5 +1,3 @@
-# memory_manager.py
-
 import random
 
 # Constantes
@@ -9,7 +7,7 @@ FRAME_SIZE = 2.5
 MAX_PROCESS_SIZE = 65
 
 # Lista predeterminada de colores
-PREDEFINED_COLORS = ['#5dade2', '#76d7c4', '#e74c3c', '#0e03f5', '#1df503', '#f4d03f','#e90075','#b400e9']
+PREDEFINED_COLORS = ['#5dade2', '#76d7c4', '#e74c3c', '#0e03f5', '#1df503', '#f4d03f', '#e90075', '#b400e9']
 available_colors = PREDEFINED_COLORS.copy()
 
 # Inicializa la matriz de RAM y ROM
@@ -181,10 +179,12 @@ def reduce_process_size(name, amount):
         delete_process_memory(name)
         return True, f'El proceso "{name}" ha sido eliminado porque su tamaño es cero.'
     
-    # Si no se debe remover ningún marco
-    if frames_to_remove <= 0:
-        return True, 'El tamaño del proceso ha sido reducido, no se liberaron marcos.'
+    # Si el nuevo total de marcos es menor que 3, no mover marcos a ROM ni liberarlos
+    if new_total_frames < 3:
+        # No se realiza ningún cambio en los marcos
+        return True, 'El tamaño del proceso ha sido reducido y los marcos se han mantenido en RAM.'
     
+    # Si el tamaño no es menor que 3, proceder con la lógica original
     # Paso 1: Mover marcos de RAM a ROM
     ram_frames = [frame for frame in process.frames if frame['type'] == 'RAM']
     frames_to_move = ram_frames[:frames_to_remove]
@@ -212,7 +212,7 @@ def reduce_process_size(name, amount):
         frame['j'] = rom_j
     
     # Paso 2: Subir un marco desde ROM a RAM solo si frames_to_remove es 1 y new_total_frames > 2
-    if frames_to_remove == 1 and new_total_frames > 2:
+    if frames_to_remove == 1:
         # Recalcular las listas después de mover marcos a ROM
         frames_in_ram = [f for f in process.frames if f['type'] == 'RAM']
         frames_in_rom = [f for f in process.frames if f['type'] == 'ROM']
