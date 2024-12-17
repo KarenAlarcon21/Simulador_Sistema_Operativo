@@ -81,8 +81,24 @@ def index():
 
 @app.route('/agregar_proceso', methods=['GET', 'POST'])
 def agregar_proceso():
+    estado_simulacion = get_estado_simulacion()
+    
+    # Contar procesos únicos
+    procesos_existentes = set()
+    for estado in ESTADOS:
+        for proceso in estado_simulacion[estado.lower()]:
+            procesos_existentes.add(proceso.get('id', ''))
+    
+    numero_procesos = len(procesos_existentes)
+    MAX_PROCESOS = 6  # Límite de procesos
     MAX_TAMANO = 65
+
     if request.method == 'POST':
+
+        if numero_procesos >= MAX_PROCESOS:
+            error = f"Has alcanzado el límite máximo de {MAX_PROCESOS} procesos."
+            return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
+
         id_proceso = request.form.get('id_proceso').lower()
         tamaño = request.form.get('tamaño')
         recursos_requeridos = request.form.getlist('recursos')
@@ -121,7 +137,11 @@ def agregar_proceso():
             return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
         return redirect(url_for('index'))
     else:
-        return render_template('agregar_proceso.html', recursos=RECURSOS_DISPONIBLES)
+        if numero_procesos >= MAX_PROCESOS:
+            mensaje = f"Has alcanzado el límite máximo de {MAX_PROCESOS} procesos."
+            return render_template('agregar_proceso.html', mensaje=mensaje, recursos=RECURSOS_DISPONIBLES, limite_alcanzado=True)
+        else:
+            return render_template('agregar_proceso.html', recursos=RECURSOS_DISPONIBLES)
     
 
 def id_ya_existe(id_proceso, estado_simulacion):
