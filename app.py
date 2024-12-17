@@ -81,6 +81,7 @@ def index():
 
 @app.route('/agregar_proceso', methods=['GET', 'POST'])
 def agregar_proceso():
+    MAX_TAMANO = 65
     if request.method == 'POST':
         id_proceso = request.form.get('id_proceso').lower()
         tamaño = request.form.get('tamaño')
@@ -90,6 +91,11 @@ def agregar_proceso():
         # Validar entradas
         if not id_proceso or not tamaño.isdigit():
             error = "Por favor, ingrese un ID válido y un tamaño numérico."
+            return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
+        
+        tamaño_int = int(tamaño)
+        if tamaño_int > MAX_TAMANO:
+            error = f"El tamaño del proceso no puede exceder {MAX_TAMANO}."
             return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
 
         estado_simulacion = get_estado_simulacion()
