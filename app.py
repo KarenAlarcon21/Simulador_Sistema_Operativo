@@ -113,7 +113,6 @@ def agregar_proceso():
             guardar_estado_simulacion(estado_simulacion)
             error = f"No se pudo asignar memoria al proceso: {msg}"
             return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
-
         return redirect(url_for('index'))
     else:
         return render_template('agregar_proceso.html', recursos=RECURSOS_DISPONIBLES)
