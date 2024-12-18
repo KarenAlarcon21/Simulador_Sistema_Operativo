@@ -370,64 +370,57 @@ def asignar_procesos(estado_simulacion):
     bloqueado = estado_simulacion['bloqueado']
     recursos_disponibles_dict = estado_simulacion['recursos_disponibles_dict']
 
+    # Separar hilos preeminentes de los no preeminentes
     hilos_preeminentes = [h for h in listo if h['preeminencia']]
     hilos_no_preeminentes = [h for h in listo if not h['preeminencia']]
 
-    # Asignar hilos preeminentes primero
+    def intentar_asignar_hilo(hilo):
+        """Intenta asignar el hilo a un procesador libre y gestiona bloqueo si no hay recursos."""
+        # Detectar qué CPU están ya ocupados
+        used_processor_ids = set(h['processor_id'] for h in ejecutando if h['processor_id'] is not None)
+        # Procesadores libres (1, 2 y 3)
+        available_processor_ids = [p for p in [1, 2, 3] if p not in used_processor_ids]
+
+        # Si no hay CPU disponible, no se asigna todavía
+        if not available_processor_ids:
+            return False
+
+        # 1) Si el hilo ya tiene todos sus recursos
+        if set(hilo['recursos_hilo']).issubset(set(hilo['recursos_obtenidos'])):
+            pass  # Pasa al siguiente paso: asignar CPU
+        # 2) No los tiene, pero hay recursos disponibles
+        elif recursos_disponibles_para_hilo(hilo, recursos_disponibles_dict):
+            asignar_recursos_hilo(hilo, recursos_disponibles_dict)
+            hilo['recursos_obtenidos'] = list(hilo['recursos_hilo'])
+        else:
+            # No logra obtener recursos; se bloquea
+            hilo['estado'] = 'Bloqueado'
+            hilo['recursos_faltantes'] = obtener_recursos_faltantes_hilo(hilo, recursos_disponibles_dict)
+            bloqueado.append(hilo)
+            return True  # Ya está gestionado (movido a bloqueado), no sigue en 'listo'
+
+        # Asignar el primer procesador libre al hilo
+        hilo['estado'] = 'Ejecutando'
+        hilo['processor_id'] = available_processor_ids[0]
+        hilo['veces_ejecutando'] += 1
+        ejecutando.append(hilo)
+        return True
+
+    # Asignar primero hilos preeminentes
     for hilo in hilos_preeminentes[:]:
-        if len(ejecutando) < 3:  # Máximo 3 procesadores
-            # 1) Si el hilo ya tiene todos sus recursos
-            if set(hilo['recursos_hilo']).issubset(set(hilo['recursos_obtenidos'])):
-                hilo['estado'] = 'Ejecutando'
-                hilo['processor_id'] = len(ejecutando) + 1
-                hilo['veces_ejecutando'] += 1
-                ejecutando.append(hilo)
-                listo.remove(hilo)
-            # 2) Si no los tiene pero están disponibles
-            elif recursos_disponibles_para_hilo(hilo, recursos_disponibles_dict):
-                asignar_recursos_hilo(hilo, recursos_disponibles_dict)
-                hilo['recursos_obtenidos'] = list(hilo['recursos_hilo'])
-                hilo['estado'] = 'Ejecutando'
-                hilo['processor_id'] = len(ejecutando) + 1
-                hilo['veces_ejecutando'] += 1
-                ejecutando.append(hilo)
-                listo.remove(hilo)
-            # 3) Caso contrario, bloquear el hilo
-            else:
-                hilo['estado'] = 'Bloqueado'
-                hilo['recursos_faltantes'] = obtener_recursos_faltantes_hilo(hilo, recursos_disponibles_dict)
-                bloqueado.append(hilo)
-                listo.remove(hilo)
+        if intentar_asignar_hilo(hilo):
+            listo.remove(hilo)
 
-    # Asignar hilos no preeminentes
+    # Luego asignar hilos no preeminentes
     for hilo in hilos_no_preeminentes[:]:
-        if len(ejecutando) < 3:
-            # 1) Si el hilo ya tiene todos sus recursos
-            if set(hilo['recursos_hilo']).issubset(set(hilo['recursos_obtenidos'])):
-                hilo['estado'] = 'Ejecutando'
-                hilo['processor_id'] = len(ejecutando) + 1
-                hilo['veces_ejecutando'] += 1
-                ejecutando.append(hilo)
-                listo.remove(hilo)
-            # 2) Si no los tiene pero están disponibles
-            elif recursos_disponibles_para_hilo(hilo, recursos_disponibles_dict):
-                asignar_recursos_hilo(hilo, recursos_disponibles_dict)
-                hilo['recursos_obtenidos'] = list(hilo['recursos_hilo'])
-                hilo['estado'] = 'Ejecutando'
-                hilo['processor_id'] = len(ejecutando) + 1
-                hilo['veces_ejecutando'] += 1
-                ejecutando.append(hilo)
-                listo.remove(hilo)
-            # 3) Caso contrario, bloquear el hilo
-            else:
-                hilo['estado'] = 'Bloqueado'
-                hilo['recursos_faltantes'] = obtener_recursos_faltantes_hilo(hilo, recursos_disponibles_dict)
-                bloqueado.append(hilo)
-                listo.remove(hilo)
+        if intentar_asignar_hilo(hilo):
+            listo.remove(hilo)
 
+    # Actualizar el estado de la simulación
     estado_simulacion['listo'] = listo
     estado_simulacion['ejecutando'] = ejecutando
     estado_simulacion['bloqueado'] = bloqueado
+
 
 
 def ejecutar_procesos(estado_simulacion):
