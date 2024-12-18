@@ -17,6 +17,7 @@
                 <th>Faltan Recursos</th>
                 <th>Paginas Iniciales</th>
                 <th>Paginas restantes</th>
+                <th>Veces ejecutado</th>
             </tr>
         </thead>
         <tbody>
@@ -31,6 +32,7 @@
                 <td>{{ proceso.recursos_faltantes }}</td>
                 <td>{{ (proceso.tamaño_inicial/2.5) | ceil }}</td>
                 <td>{{ (proceso.tamaño_restante/2.5) | ceil }}</td>
+                <td>{{ proceso.veces_ejecutando }}</td>
             </tr>
             {% endfor %}
         </tbody>

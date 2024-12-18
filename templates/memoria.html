@@ -59,7 +59,7 @@
     {% for process in processes %}
         <li class="process-item">
             <span style="background-color: {{ process.color }}; padding: 5px; color: white;">
-                {{ process.name }} - Tamaño: {{ process.size }} - Páginas totales: {{ process.frames|length }} - Páginas restantes: {{ (process.size / 2.5) | ceil }}
+                {{ process.name }} - Tamaño inicial: {{ process.size_initial }} - Tamaño Restante: {{ process.size }} - Páginas totales: {{ process.frames|length }} - Páginas restantes: {{ (process.size / 2.5) | ceil }}
             </span>
         </li>
     {% endfor %}

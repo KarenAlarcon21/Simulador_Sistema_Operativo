@@ -24,6 +24,7 @@ class Proceso:
         self.recursos_obtenidos = []
         self.unidades_ejecutadas = 0  # Contador de unidades ejecutadas en este ciclo
         self.recursos_faltantes = []  # Recursos faltantes si está bloqueado
+        self.veces_ejecutando = 0
 
     def __str__(self):
         return f"ID: {self.id}, Tamaño: {self.tamaño_inicial}, Restante: {self.tamaño}, Estado: {self.estado}, Preeminencia: {self.preeminencia}"
@@ -39,6 +40,7 @@ class Proceso:
             'recursos_obtenidos': self.recursos_obtenidos,
             'unidades_ejecutadas': self.unidades_ejecutadas,
             'recursos_faltantes': self.recursos_faltantes,
+            'veces_ejecutando': self.veces_ejecutando,
         }
 
     @staticmethod
@@ -49,6 +51,7 @@ class Proceso:
         proceso.recursos_obtenidos = data['recursos_obtenidos']
         proceso.unidades_ejecutadas = data['unidades_ejecutadas']
         proceso.recursos_faltantes = data.get('recursos_faltantes', [])
+        proceso.veces_ejecutando = data.get('veces_ejecutando', 0)
         return proceso
 
 def get_estado_simulacion():
@@ -331,12 +334,14 @@ def asignar_procesos(estado_simulacion):
             if proceso.recursos_obtenidos == proceso.recursos_requeridos:
                 listo.remove(proceso)
                 proceso.estado = 'Ejecutando'
+                proceso.veces_ejecutando += 1
                 ejecutando.append(proceso)
             elif recursos_disponibles(proceso, recursos_disponibles_dict):
                 asignar_recursos(proceso, recursos_disponibles_dict)
                 proceso.recursos_obtenidos = proceso.recursos_requeridos[:]
                 listo.remove(proceso)
                 proceso.estado = 'Ejecutando'
+                proceso.veces_ejecutando += 1
                 ejecutando.append(proceso)
             else:
                 proceso.estado = 'Bloqueado'
@@ -351,12 +356,14 @@ def asignar_procesos(estado_simulacion):
                 if proceso.recursos_obtenidos == proceso.recursos_requeridos:
                     listo.remove(proceso)
                     proceso.estado = 'Ejecutando'
+                    proceso.veces_ejecutando += 1
                     ejecutando.append(proceso)
                 elif recursos_disponibles(proceso, recursos_disponibles_dict):
                     asignar_recursos(proceso, recursos_disponibles_dict)
                     proceso.recursos_obtenidos = proceso.recursos_requeridos[:]
                     listo.remove(proceso)
                     proceso.estado = 'Ejecutando'
+                    proceso.veces_ejecutando += 1
                     ejecutando.append(proceso)
                 else:
                     proceso.estado = 'Bloqueado'
@@ -471,6 +478,7 @@ def generar_reporte():
                 'preeminencia': proceso.preeminencia,
                 'recursos_obtenidos': ', '.join(proceso.recursos_obtenidos) if proceso.recursos_obtenidos else 'Ninguno',
                 'recursos_faltantes': ', '.join(proceso.recursos_faltantes) if proceso.recursos_faltantes else '',
+                'veces_ejecutando': proceso.veces_ejecutando,
             }
             reporte_datos.append(proceso_info)
 
