@@ -1,15 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Simulación de Procesos{% endblock %}
+{% block title %}Simulación de Hilos{% endblock %}
 
 {% block content %}
-<h1 class="text-center my-4">Simulación de Procesos</h1>
+<h1 class="text-center my-4">Simulación de Hilos</h1>
 <div id="contenedor-simulacion"></div>
 
 <p>
-    <button class="btn btn-primary" id="boton-volver">
-        Pausar Simulación
-    </button>
+    <button class="btn btn-primary" id="boton-pausar">Pausar Simulación</button>
 </p>
 
 <style>
@@ -18,31 +16,58 @@
         border-collapse: collapse;
         width: 100%;
     }
-
     th, td {
-        border: 1px solid #dee2e6; /* Color de los bordes */
-        padding: 8px; /* Espaciado interno */
+        border: 1px solid #dee2e6;
+        padding: 8px;
+    }
+    th {
+        background-color: #222529;
+        color: #ffffff;
+        text-align: center;
     }
 
-    /* Personalización del encabezado */
-    th {
-        background-color: #222529; /* Oscuro */
-        color: #ffffff; /* Blanco */
-        text-align: center; /* Centramos el texto */
+    /* Para la columna "Ejecutando" */
+    .ejecutando-container {
+        display: flex;
+        gap: 10px;
     }
+    .processor-box {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #ccc;
+        font-weight: bold;
+    }
+    .processor-box-1 { background-color: #aaffaa; }
+    .processor-box-2 { background-color: #ffd1dc; }
+    .processor-box-3 { background-color: #add8e6; }
 </style>
 
 <script>
-    let intervalId;
     let simulacionPausada = false;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const botonPausar = document.getElementById('boton-pausar');
+        botonPausar.addEventListener('click', pausarSimulacion);
+
+        obtenerEstado();
+    });
+
+    function pausarSimulacion() {
+        simulacionPausada = true;
+        fetch('/pausar_simulacion')
+            .then(() => {
+                window.location.href = "{{ url_for('index') }}";
+            });
+    }
 
     function obtenerEstado() {
         fetch('/obtener_estado')
             .then(response => response.json())
             .then(data => {
                 actualizarInterfaz(data);
-                if (data.simulacion_en_curso && !simulacionPausada) {
-                    setTimeout(avanzarSimulacion, 1000); // Esperar 1 segundo antes de avanzar
+                if (data.simulacion_en_curso && !data.simulacion_pausada) {
+                    setTimeout(avanzarSimulacion, 1000);
                 } else if (data.simulacion_pausada) {
                     simulacionPausada = true;
                 } else {
@@ -52,15 +77,13 @@
     }
 
     function avanzarSimulacion() {
-        if (simulacionPausada) {
-            return;
-        }
+        if (simulacionPausada) return;
         fetch('/avanzar_simulacion')
             .then(response => response.json())
             .then(data => {
                 actualizarInterfaz(data);
-                if (data.simulacion_en_curso && !simulacionPausada) {
-                    setTimeout(avanzarSimulacion, 1000); // Esperar 1 segundo antes de avanzar
+                if (data.simulacion_en_curso && !data.simulacion_pausada) {
+                    setTimeout(avanzarSimulacion, 1000);
                 } else if (data.simulacion_pausada) {
                     simulacionPausada = true;
                 } else {
@@ -76,7 +99,7 @@
         const tabla = document.createElement('table');
         tabla.className = 'table';
 
-        // Encabezado oscuro
+        // Crear encabezado de estados
         const headerRow = document.createElement('tr');
         data.estados.forEach(estado => {
             const th = document.createElement('th');
@@ -85,48 +108,113 @@
         });
         tabla.appendChild(headerRow);
 
-        // Filas de datos
+        // Una fila con 5 celdas, una por estado
         const dataRow = document.createElement('tr');
+
         data.estados.forEach(estado => {
             const td = document.createElement('td');
             td.vAlign = 'top';
-            const procesos = data.procesos[estado];
-            procesos.forEach(proceso => {
-                const p = document.createElement('p');
-                p.innerHTML = `
-                    <strong>ID:</strong> ${proceso.id}<br>
-                    <strong>Tamaño Inicial:</strong> ${proceso.tamaño_inicial}<br>
-                    <strong>Tamaño Restante:</strong> ${proceso.tamaño}<br>
-                    <strong>Estado:</strong> ${proceso.estado}<br>
-                    <strong>Recursos Requeridos:</strong> ${proceso.recursos_requeridos}<br>
-                    <strong>Recursos Obtenidos:</strong> ${proceso.recursos_obtenidos}<br>
-                    <strong>Preeminencia:</strong> ${proceso.preeminencia}<br>
-                    ${proceso.estado === 'Bloqueado' ? `<strong>Faltan Recursos:</strong> ${proceso.recursos_faltantes}<br>` : ''}
-                `;
-                td.appendChild(p);
-                const hr = document.createElement('hr');
-                td.appendChild(hr);
-            });
+
+            // Si es la columna "Ejecutando", creamos la "barra horizontal" subdividida en 3 procesadores
+            if (estado === 'Ejecutando') {
+                const containerDiv = document.createElement('div');
+                containerDiv.className = 'ejecutando-container';
+
+                // Filtramos los hilos de EJECUTANDO
+                const hilosEjecutando = data.procesos['Ejecutando'] || [];
+
+                // Procesador 1
+                const proc1Div = document.createElement('div');
+                proc1Div.className = 'processor-box processor-box-1';
+                proc1Div.innerHTML = '<strong>Procesador 1</strong><hr>';
+
+                hilosEjecutando.filter(h => h.processor_id === 1).forEach(hilo => {
+                    proc1Div.innerHTML += `
+                        <p style="text-align:left;">
+                            <strong>Hilo ID:</strong> ${hilo.id_hilo}<br>
+                            <strong>Proceso ID:</strong> ${hilo.proceso_id}<br>
+                            <strong>Tamaño Inicial:</strong> ${hilo.tamaño_hilo_inicial}<br>
+                            <strong>Tamaño Restante:</strong> ${hilo.tamaño_hilo}<br>
+                            <strong>Recursos Hilo:</strong> ${hilo.recursos_hilo}<br>
+                            <strong>Recursos Obtenidos:</strong> ${hilo.recursos_obtenidos}<br>
+                            <strong>Preeminencia:</strong> ${hilo.preeminencia}
+                        </p>
+                        <hr>
+                    `;
+                });
+
+                // Procesador 2
+                const proc2Div = document.createElement('div');
+                proc2Div.className = 'processor-box processor-box-2';
+                proc2Div.innerHTML = '<strong>Procesador 2</strong><hr>';
+
+                hilosEjecutando.filter(h => h.processor_id === 2).forEach(hilo => {
+                    proc2Div.innerHTML += `
+                        <p style="text-align:left;">
+                            <strong>Hilo ID:</strong> ${hilo.id_hilo}<br>
+                            <strong>Proceso ID:</strong> ${hilo.proceso_id}<br>
+                            <strong>Tamaño Inicial:</strong> ${hilo.tamaño_hilo_inicial}<br>
+                            <strong>Tamaño Restante:</strong> ${hilo.tamaño_hilo}<br>
+                            <strong>Recursos Hilo:</strong> ${hilo.recursos_hilo}<br>
+                            <strong>Recursos Obtenidos:</strong> ${hilo.recursos_obtenidos}<br>
+                            <strong>Preeminencia:</strong> ${hilo.preeminencia}
+                        </p>
+                        <hr>
+                    `;
+                });
+
+                // Procesador 3
+                const proc3Div = document.createElement('div');
+                proc3Div.className = 'processor-box processor-box-3';
+                proc3Div.innerHTML = '<strong>Procesador 3</strong><hr>';
+
+                hilosEjecutando.filter(h => h.processor_id === 3).forEach(hilo => {
+                    proc3Div.innerHTML += `
+                        <p style="text-align:left;">
+                            <strong>Hilo ID:</strong> ${hilo.id_hilo}<br>
+                            <strong>Proceso ID:</strong> ${hilo.proceso_id}<br>
+                            <strong>Tamaño Inicial:</strong> ${hilo.tamaño_hilo_inicial}<br>
+                            <strong>Tamaño Restante:</strong> ${hilo.tamaño_hilo}<br>
+                            <strong>Recursos Hilo:</strong> ${hilo.recursos_hilo}<br>
+                            <strong>Recursos Obtenidos:</strong> ${hilo.recursos_obtenidos}<br>
+                            <strong>Preeminencia:</strong> ${hilo.preeminencia}
+                        </p>
+                        <hr>
+                    `;
+                });
+
+                containerDiv.appendChild(proc1Div);
+                containerDiv.appendChild(proc2Div);
+                containerDiv.appendChild(proc3Div);
+                td.appendChild(containerDiv);
+
+            } else {
+                // Para otros estados: 
+                const hilos = data.procesos[estado] || [];
+                hilos.forEach(hilo => {
+                    const p = document.createElement('p');
+                    p.innerHTML = `
+                        <strong>Hilo ID:</strong> ${hilo.id_hilo}<br>
+                        <strong>Proceso ID:</strong> ${hilo.proceso_id}<br>
+                        <strong>Tamaño Inicial:</strong> ${hilo.tamaño_hilo_inicial}<br>
+                        <strong>Tamaño Restante:</strong> ${hilo.tamaño_hilo}<br>
+                        <strong>Estado:</strong> ${hilo.estado}<br>
+                        <strong>Recursos Hilo:</strong> ${hilo.recursos_hilo}<br>
+                        <strong>Recursos Obtenidos:</strong> ${hilo.recursos_obtenidos}<br>
+                        <strong>Preeminencia:</strong> ${hilo.preeminencia}<br>
+                        <strong>Procesador:</strong> ${hilo.processor_id ? hilo.processor_id : '-'}<br>
+                        ${hilo.estado === 'Bloqueado' ? `<strong>Faltan Recursos:</strong> ${hilo.recursos_faltantes}<br>` : ''}
+                    `;
+                    td.appendChild(p);
+                    td.appendChild(document.createElement('hr'));
+                });
+            }
+
             dataRow.appendChild(td);
         });
         tabla.appendChild(dataRow);
 
         contenedor.appendChild(tabla);
     }
-
-    function pausarSimulacion() {
-        simulacionPausada = true;
-        fetch('/pausar_simulacion');
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const botonVolver = document.getElementById('boton-volver');
-        botonVolver.addEventListener('click', function () {
-            pausarSimulacion(); // Pausar la simulación
-            window.location.href = "{{ url_for('index') }}"; // Redirigir al inicio
-        });
-
-        obtenerEstado(); // Iniciar la simulación
-    });
 </script>
 {% endblock %}

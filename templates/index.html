@@ -6,26 +6,38 @@ Simulador Sistema Operativo
 
 {% block content %}
 <style>
-    /* Asegura que la tabla y el menú lateral se alineen horizontalmente */
     .container {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
         gap: 20px;
     }
-
-    /* Menú lateral */
     .menu-lateral {
         width: 200px;
         position: sticky;
         top: 0;
     }
-
-    /* Espaciado entre los botones del menú */
     .menu-lateral .btn {
         margin-bottom: 10px;
         width: 100%;
     }
+
+    /* Barra horizontal dentro de la columna 'Ejecutando' */
+    .ejecutando-container {
+        display: flex;
+        gap: 10px;
+    }
+    .processor-box {
+        flex: 1;
+        padding: 8px;
+        color: #000;
+        text-align: center;
+        font-weight: bold;
+        border: 1px solid #ccc; /* para visualizar mejor la separación */
+    }
+    .processor-box-1 { background-color: #aaffaa; } /* verde claro */
+    .processor-box-2 { background-color: #ffd1dc; } /* rosa claro */
+    .processor-box-3 { background-color: #add8e6; } /* azul claro */
 </style>
 
 <div class="container">
@@ -35,31 +47,98 @@ Simulador Sistema Operativo
             <thead class="table-dark" style="text-align: center;">
                 <tr>
                 {% for estado in estados %}
-                <th>{{ estado }}</th>
+                    <th>{{ estado }}</th>
                 {% endfor %}
                 </tr>
             </thead>
             <tr>
-                {% for estado in estados %}
-                <td valign="middle">
-                    <!-- Dentro del ciclo que muestra los procesos en cada estado -->
-                    {% for proceso in procesos[estado] %}
-                    <p>
-                        <strong>ID:</strong> {{ proceso.id }}<br>
-                        <strong>Tamaño Inicial:</strong> {{ proceso.tamaño_inicial }}<br>
-                        <strong>Tamaño Restante:</strong> {{ proceso.tamaño }}<br>
-                        <strong>Estado:</strong> {{ proceso.estado }}<br>
-                        <strong>Recursos Requeridos:</strong> {{ proceso.recursos_requeridos }}<br>
-                        <strong>Recursos Obtenidos:</strong> {{ proceso.recursos_obtenidos }}<br>
-                        <strong>Preeminencia:</strong> {{ proceso.preeminencia }}<br>
-                        {% if proceso.estado == 'Bloqueado' %}
-                            <strong>Faltan Recursos:</strong> {{ proceso.recursos_faltantes }}
-                        {% endif %}
-                    </p>
-                    <hr>
-                    {% endfor %}
+            {% for estado in estados %}
+                <td valign="top">
+                    {% if estado == 'Ejecutando' %}
+                        <!-- 
+                            En lugar de iterar hilos directamente, creamos
+                            3 sub-barras (una por procesador).
+                        -->
+                        <div class="ejecutando-container">
+
+                            <!-- Procesador 1 -->
+                            <div class="processor-box processor-box-1">
+                                <strong>Procesador 1</strong><hr>
+                                {% for hilo in procesos['Ejecutando'] %}
+                                    {% if hilo.processor_id == 1 %}
+                                        <p>
+                                            <strong>Hilo ID:</strong> {{ hilo.id_hilo }}<br>
+                                            <strong>Proc. ID:</strong> {{ hilo.proceso_id }}<br>
+                                            <strong>Tamaño Inicial:</strong> {{ hilo.tamaño_hilo_inicial }}<br>
+                                            <strong>Tamaño Restante:</strong> {{ hilo.tamaño_hilo }}<br>
+                                            <strong>Recursos:</strong> {{ hilo.recursos_hilo }}<br>
+                                            <strong>Preeminencia:</strong> {{ hilo.preeminencia }}
+                                        </p>
+                                        <hr>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- Procesador 2 -->
+                            <div class="processor-box processor-box-2">
+                                <strong>Procesador 2</strong><hr>
+                                {% for hilo in procesos['Ejecutando'] %}
+                                    {% if hilo.processor_id == 2 %}
+                                        <p>
+                                            <strong>Hilo ID:</strong> {{ hilo.id_hilo }}<br>
+                                            <strong>Proc. ID:</strong> {{ hilo.proceso_id }}<br>
+                                            <strong>Tamaño Inicial:</strong> {{ hilo.tamaño_hilo_inicial }}<br>
+                                            <strong>Tamaño Restante:</strong> {{ hilo.tamaño_hilo }}<br>
+                                            <strong>Recursos:</strong> {{ hilo.recursos_hilo }}<br>
+                                            <strong>Preeminencia:</strong> {{ hilo.preeminencia }}
+                                        </p>
+                                        <hr>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- Procesador 3 -->
+                            <div class="processor-box processor-box-3">
+                                <strong>Procesador 3</strong><hr>
+                                {% for hilo in procesos['Ejecutando'] %}
+                                    {% if hilo.processor_id == 3 %}
+                                        <p>
+                                            <strong>Hilo ID:</strong> {{ hilo.id_hilo }}<br>
+                                            <strong>Proc. ID:</strong> {{ hilo.proceso_id }}<br>
+                                            <strong>Tamaño Inicial:</strong> {{ hilo.tamaño_hilo_inicial }}<br>
+                                            <strong>Tamaño Restante:</strong> {{ hilo.tamaño_hilo }}<br>
+                                            <strong>Recursos:</strong> {{ hilo.recursos_hilo }}<br>
+                                            <strong>Preeminencia:</strong> {{ hilo.preeminencia }}
+                                        </p>
+                                        <hr>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                        </div> <!-- fin .ejecutando-container -->
+
+                    {% else %}
+                        <!-- Lógica normal para otros estados -->
+                        {% for hilo in procesos[estado] %}
+                        <p>
+                            <strong>Hilo ID:</strong> {{ hilo.id_hilo }}<br>
+                            <strong>Proceso ID:</strong> {{ hilo.proceso_id }}<br>
+                            <strong>Tamaño Inicial:</strong> {{ hilo.tamaño_hilo_inicial }}<br>
+                            <strong>Tamaño Restante:</strong> {{ hilo.tamaño_hilo }}<br>
+                            <strong>Estado:</strong> {{ hilo.estado }}<br>
+                            <strong>Recursos Hilo:</strong> {{ hilo.recursos_hilo }}<br>
+                            <strong>Recursos Obtenidos:</strong> {{ hilo.recursos_obtenidos }}<br>
+                            <strong>Preeminencia:</strong> {{ hilo.preeminencia }}<br>
+                            <strong>Procesador:</strong> {{ hilo.processor_id if hilo.processor_id else '-' }}<br>
+                            {% if hilo.estado == 'Bloqueado' %}
+                                <strong>Faltan Recursos:</strong> {{ hilo.recursos_faltantes }}<br>
+                            {% endif %}
+                        </p>
+                        <hr>
+                        {% endfor %}
+                    {% endif %}
                 </td>
-                {% endfor %}
+            {% endfor %}
             </tr>
         </table>
     </div>

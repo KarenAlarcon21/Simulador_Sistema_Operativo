@@ -93,10 +93,14 @@
         {% if error %}
         <p class="error-message">{{ error }}</p>
         {% endif %}
+
+        {% if mensaje %}
+        <div class="alert alert-info">{{ mensaje }}</div>
+        {% endif %}
         
         <form method="post">
             <p>ID del Proceso: <input type="text" name="id_proceso"></p>
-            <p>Tamaño: <input type="text" name="tamaño"></p>
+            <p>Tamaño: <input type="text" name="tamaño" min="1" max="65" required></p>
             <p><input type="checkbox" name="preeminencia" value="True"> Proceso con Preeminencia</p>
             <p>Recursos Requeridos:</p>
             {% for recurso in recursos %}

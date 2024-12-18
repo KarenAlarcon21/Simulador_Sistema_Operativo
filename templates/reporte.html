@@ -8,31 +8,31 @@
     <table class="table table-bordered" style="width: 100%;">
         <thead class="table-dark" style="text-align: center;">
             <tr>
-                <th>ID</th>
+                <th>Hilo ID</th>
+                <th>Proceso ID</th>
                 <th>Tamaño Inicial</th>
                 <th>Tamaño Restante</th>
                 <th>Estado</th>
                 <th>Preeminencia</th>
                 <th>Recursos Obtenidos</th>
                 <th>Faltan Recursos</th>
-                <th>Paginas Iniciales</th>
-                <th>Paginas restantes</th>
-                <th>Veces ejecutado</th>
+                <th>Procesador</th>
+                <th>Veces Ejecutando</th>
             </tr>
         </thead>
         <tbody>
-            {% for proceso in reporte_datos %}
+            {% for item in reporte_datos %}
             <tr style="text-align: center;">
-                <td>{{ (proceso.id).upper() }}</td>
-                <td>{{ proceso.tamaño_inicial }}</td>
-                <td>{{ proceso.tamaño_restante }}</td>
-                <td>{{ proceso.estado }}</td>
-                <td>{{ proceso.preeminencia }}</td>
-                <td>{{ proceso.recursos_obtenidos }}</td>
-                <td>{{ proceso.recursos_faltantes }}</td>
-                <td>{{ (proceso.tamaño_inicial/2.5) | ceil }}</td>
-                <td>{{ (proceso.tamaño_restante/2.5) | ceil }}</td>
-                <td>{{ proceso.veces_ejecutando }}</td>
+                <td>{{ item.id }}</td>
+                <td>{{ item.proceso_id }}</td>
+                <td>{{ item.tamaño_hilo_inicial }}</td>
+                <td>{{ item.tamaño_hilo }}</td>
+                <td>{{ item.estado }}</td>
+                <td>{{ item.preeminencia }}</td>
+                <td>{{ item.recursos_obtenidos }}</td>
+                <td>{{ item.recursos_faltantes }}</td>
+                <td>{{ item.processor_id }}</td> 
+                <td>{{ item.veces_ejecutando }}</td>
             </tr>
             {% endfor %}
         </tbody>

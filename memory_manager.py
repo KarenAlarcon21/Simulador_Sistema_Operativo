@@ -42,7 +42,7 @@ processes = []
 class ProcesoMemoria:
     def __init__(self, name, size, color):
         self.name = name
-        self.size_initial = size  # Tamaño inicial del proceso
+        self.size_initial = size         # Tamaño inicial del proceso
         self.size = size
         self.color = color
         self.frames = []  # Lista de marcos asignados (RAM y ROM)
