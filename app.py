@@ -117,6 +117,10 @@ def agregar_proceso():
             error = f"El tamaño del proceso no puede exceder {MAX_TAMANO}."
             return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
 
+        if tamaño_int < 1:
+            error = "El tamaño dígitado para el proceso no se encuentra dentro del rango permitido (1 a 65 kb)."
+            return render_template('agregar_proceso.html', error=error, recursos=RECURSOS_DISPONIBLES)
+
         estado_simulacion = get_estado_simulacion()
 
         # Verificar si el ID ya existe
