@@ -24,8 +24,8 @@
             {% for proceso in reporte_datos %}
             <tr style="text-align: center;">
                 <td>{{ (proceso.id).upper() }}</td>
-                <td>{{ proceso.tamaño_inicial }}</td>
-                <td>{{ proceso.tamaño_restante }}</td>
+                <td>{{ proceso.tamaño_inicial }} kb</td>
+                <td>{{ proceso.tamaño_restante }} kb</td>
                 <td>{{ proceso.estado }}</td>
                 <td>{{ proceso.preeminencia }}</td>
                 <td>{{ proceso.recursos_obtenidos }}</td>
