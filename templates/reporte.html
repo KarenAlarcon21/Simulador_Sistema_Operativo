@@ -23,8 +23,8 @@
         <tbody>
             {% for item in reporte_datos %}
             <tr style="text-align: center;">
-                <td>{{ item.id }}</td>
-                <td>{{ item.proceso_id }}</td>
+                <td>{{ (item.id).upper() }}</td>
+                <td>{{ (item.proceso_id).upper() }}</td>
                 <td>{{ item.tamaño_hilo_inicial }}</td>
                 <td>{{ item.tamaño_hilo }}</td>
                 <td>{{ item.estado }}</td>

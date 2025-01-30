@@ -20,7 +20,7 @@
                             <div class="cell so">S.O.</div>
                         {% else %}
                             <div class="cell" style="background-color: {{ cell.process.color }};">
-                                {{ cell.frame_id }}
+                                {{ (cell.frame_id).upper() }}
                             </div>
                         {% endif %}
                     {% else %}
@@ -42,7 +42,7 @@
                             <div class="cell so">S.O.</div>
                         {% else %}
                             <div class="cell" style="background-color: {{ cell.process.color }};">
-                                {{ cell.frame_id }}
+                                {{ (cell.frame_id).upper() }}
                             </div>
                         {% endif %}
                     {% else %}
@@ -59,8 +59,8 @@
     {% for hilo in hilos %}
         <li class="process-item">
             <span style="background-color: {{ hilo.color }}; padding: 5px; color: white;">
-                Hilo ID: {{ hilo.hilo_id }} |
-                Proceso: {{ hilo.process_id }} |
+                Hilo ID: {{ (hilo.hilo_id).upper() }} |
+                Proceso: {{ (hilo.process_id).upper() }} |
                 Tamaño inicial: {{ hilo.size_initial }} |
                 Tamaño Restante: {{ hilo.size }} |
                 Páginas totales: {{ hilo.frames|length }}
