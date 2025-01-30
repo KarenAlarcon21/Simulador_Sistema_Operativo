@@ -1,65 +1,69 @@
 {% extends "base.html" %}
-
 {% block title %}Gestión de Memoria{% endblock %}
 
 {% block content %}
-<h1>Simulador de Gestión de Memoria</h1>
+<h1>Simulador de Gestión de Memoria - Hilos</h1>
 
 {% if message %}
     <p style="color:red;">{{ message }}</p>
 {% endif %}
 
-<br>
-
-<!-- Contenedor Flex para alinear RAM y ROM horizontalmente -->
 <div style="display: flex; gap: 20px;">
-
     <!-- RAM -->
-    <h2>RAM</h2>
-    <div class="matrix ram" style="grid-template-columns: repeat({{ ram[0]|length }}, 55px);">
-        {% for row in ram %}
-            {% for cell in row %}
-                {% if cell.process %}
-                    {% if cell.process == 'S.O.' %}
-                        <div class="cell so">
-                            S.O.
-                        </div>
+    <div>
+        <h2>RAM</h2>
+        <div class="matrix ram" style="grid-template-columns: repeat({{ ram[0]|length }}, 65px);">
+            {% for row in ram %}
+                {% for cell in row %}
+                    {% if cell.process %}
+                        {% if cell.process == 'S.O.' %}
+                            <div class="cell so">S.O.</div>
+                        {% else %}
+                            <div class="cell" style="background-color: {{ cell.process.color }};">
+                                {{ cell.frame_id }}
+                            </div>
+                        {% endif %}
                     {% else %}
-                        <div class="cell" style="background-color: {{ cell.process.color }}; position: relative;">
-                            <span style="font-size: 20px;">{{ cell.frame_id }}</span>
-                        </div>
+                        <div class="cell"></div>
                     {% endif %}
-                {% else %}
-                    <div class="cell"></div>
-                {% endif %}
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
+        </div>
     </div>
 
     <!-- ROM -->
-    <h2>ROM</h2>
-    <div class="matrix rom" style="grid-template-columns: repeat({{ rom[0]|length }}, 55px);">
-        {% for row in rom %}
-            {% for cell in row %}
-                {% if cell.process %}
-                    <div class="cell" style="background-color: {{ cell.process.color }}; position: relative;">
-                        <span style="font-size: 20px;">{{ cell.frame_id }}</span>
-                    </div>
-                {% else %}
-                    <div class="cell"></div>
-                {% endif %}
+    <div>
+        <h2>ROM</h2>
+        <div class="matrix rom" style="grid-template-columns: repeat({{ rom[0]|length }}, 65px);">
+            {% for row in rom %}
+                {% for cell in row %}
+                    {% if cell.process %}
+                        {% if cell.process == 'S.O.' %}
+                            <div class="cell so">S.O.</div>
+                        {% else %}
+                            <div class="cell" style="background-color: {{ cell.process.color }};">
+                                {{ cell.frame_id }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="cell"></div>
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
-        {% endfor %}
+        </div>
     </div>
-
 </div>
 
-<h2>Procesos en Memoria</h2>
+<h2>Hilos en Memoria</h2>
 <ul class="process-list">
-    {% for process in processes %}
+    {% for hilo in hilos %}
         <li class="process-item">
-            <span style="background-color: {{ process.color }}; padding: 5px; color: white;">
-                {{ process.name }} - Tamaño inicial: {{ process.size_initial }} - Tamaño Restante: {{ process.size }} - Páginas totales: {{ process.frames|length }} - Páginas restantes: {{ (process.size / 2.5) | ceil }}
+            <span style="background-color: {{ hilo.color }}; padding: 5px; color: white;">
+                Hilo ID: {{ hilo.hilo_id }} |
+                Proceso: {{ hilo.process_id }} |
+                Tamaño inicial: {{ hilo.size_initial }} |
+                Tamaño Restante: {{ hilo.size }} |
+                Frames totales: {{ hilo.frames|length }}
             </span>
         </li>
     {% endfor %}
@@ -68,25 +72,20 @@
 <style>
     .matrix {
         display: grid;
-        grid-template-columns: repeat(auto-fill, 50px);
         gap: 2px;
     }
     .cell {
-        width: 55px;
-        height: 55px;
+        width: 65px;
+        height: 65px;
         background-color: lightgray;
         text-align: center;
         line-height: 55px;
-        font-size: 20px;
-        color: white;
         border: 1px solid #ccc;
-        position: relative;
+        color: #ffffff;
     }
-    .ram {
-        margin-bottom: 55px;
-    }
-    .rom {
-        margin-bottom: 55px;
+    .cell.so {
+        background-color: #000;
+        color: #fff;
     }
     .process-list {
         list-style-type: none;
@@ -95,30 +94,5 @@
     .process-item {
         margin-bottom: 5px;
     }
-    .delete-button {
-        background-color: red;
-        color: white;
-        border: none;
-        padding: 5px;
-        cursor: pointer;
-    }
-    .delete-button:hover {
-        background-color: darkred;
-    }
-    .reduce-button {
-        background-color: orange;
-        color: white;
-        border: none;
-        padding: 5px;
-        cursor: pointer;
-    }
-    .reduce-button:hover {
-        background-color: darkorange;
-    }
-    .cell.so {
-        background-color: black;
-        color: white;
-    }
 </style>
-
 {% endblock %}
