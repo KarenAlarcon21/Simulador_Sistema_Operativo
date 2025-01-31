@@ -454,6 +454,11 @@ def liberar_recursos_hilo(hilo, recursos_disponibles_dict):
     for r in hilo['recursos_hilo']:
         recursos_disponibles_dict[r] = True
 
+# Crear filtro para redondear número
+@app.template_filter('ceil')
+def ceil_filter(value):
+    return math.ceil(value)
+
 @app.route('/generar_reporte')
 def generar_reporte():
     estado_simulacion = get_estado_simulacion()

@@ -18,6 +18,8 @@
                 <th>Faltan Recursos</th>
                 <th>Procesador</th>
                 <th>Veces Ejecutando</th>
+                <th>Páginas iniciales</th>
+                <th>Páginas restantes</th>
             </tr>
         </thead>
         <tbody>
@@ -33,6 +35,8 @@
                 <td>{{ item.recursos_faltantes }}</td>
                 <td>{{ item.processor_id }}</td> 
                 <td>{{ item.veces_ejecutando }}</td>
+                <td>{{ (item.tamaño_hilo_inicial/2.5) | ceil }}</td>
+                <td>{{ (item.tamaño_hilo/2.5) | ceil }}</td>
             </tr>
             {% endfor %}
         </tbody>
